@@ -87,6 +87,39 @@ npx astrical help init
 npx astrical help module add
 ```
 
+### Command Reference
+
+#### `init`
+
+Initializes a new Astrical project by cloning a starter repository, setting up dependencies, and preparing a fresh git history.
+
+**Usage:**
+```bash
+npx astrical init <directory> [options]
+```
+
+**Arguments:**
+- `directory` (Required): The directory to initialize the project in. If the directory does not exist, it will be created. If it does exist, it must be empty.
+
+**Options:**
+- `--repo <url>` (Default: `https://github.com/nexical/astrical-starter`): The URL of the starter repository to clone.
+    - Supports standard Git URLs (e.g., `https://github.com/user/repo.git`).
+    - Supports GitHub short syntax `gh@owner/repo` (e.g., `gh@nexical/astrical-starter`).
+
+**What it does:**
+1.  **Clones** the specified starter repository (recursively, including submodules) into the target directory.
+2.  **Updates** all submodules to their latest `main` branch.
+3.  **Installs** dependencies using `npm install`.
+4.  **Resets** Git history:
+    - Creates an orphan branch (`new-main`).
+    - Commits all files as an "Initial commit".
+    - Deletes the old history (removes `main`/`master`).
+    - Renames the branch to `main`.
+    - Removes the `origin` remote to prevent accidental pushes to the starter repo.
+
+**Output:**
+- A ready-to-use Astrical project in the specified directory, with fresh git history and installed dependencies.
+
 ---
 
 ## Project Structure
@@ -135,11 +168,8 @@ graph TD
 We prioritize **100% Test Coverage**. All logic branches, statements, and lines must be covered.
 
 ```bash
-# Run all unit tests
+# Run all unit tests (with coverage report)
 npm run test
-
-# Run tests with coverage report
-npm run coverage
 ```
 
 Tests are written using `vitest` and are located in `test/unit/`. When submitting changes, ensure coverage remains at 100%.
