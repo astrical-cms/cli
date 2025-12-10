@@ -285,4 +285,50 @@ describe('CLI', () => {
         // Should register with empty description and no options/args
         expect(mockCac.command).toHaveBeenCalledWith(expect.stringContaining('nometadata'), '');
     });
+
+    it('should map variadic arguments correctly', async () => {
+        // Test class with variadic args
+        class VariadicCommand extends BaseCommand {
+            static args = {
+                args: [{ name: 'items...', required: true }]
+            };
+            async run() { }
+        }
+        mockLoad.mockResolvedValue([{
+            command: 'list',
+            class: VariadicCommand,
+            path: '/path/to/list.ts'
+        }]);
+
+        const cli = new CLI();
+        await cli.start();
+
+        // Simulate execution: list a b c
+        const action = mockCommand.action.mock.calls[0][0]; // First registered cmd action
+        // args: [['a', 'b', 'c'], options] - CAC passes variadic as array
+        const options: any = {};
+        await action(['a', 'b', 'c'], options);
+
+        // Expect options.items to be ['a', 'b', 'c']
+        expect(options.items).toEqual(['a', 'b', 'c']);
+
+        // Case 2: Empty variadic
+        const optionsEmpty: any = {};
+        await action(optionsEmpty);
+        expect(optionsEmpty.items).toBeUndefined();
+    });
+
+    it('should expose commands and raw CLI instance', async () => {
+        const cli = new CLI();
+        // Just verify they return what we expect (even if empty/mocked)
+        expect(cli.getRawCLI()).toBeDefined();
+        expect(cli.getCommands()).toEqual([]);
+
+        // After start, commands should be populated
+        mockLoad.mockResolvedValue([]);
+        (fs.existsSync as any).mockReturnValue(false);
+        await cli.start();
+
+        expect(cli.getCommands()).toEqual([]);
+    });
 });

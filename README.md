@@ -78,6 +78,13 @@ npx astrical <command> [options]
 
 # Example: Initialize a new project
 npx astrical init my-new-project
+
+# Get help
+npx astrical help
+
+# Get help for a specific command
+npx astrical help init
+npx astrical help module add
 ```
 
 ---

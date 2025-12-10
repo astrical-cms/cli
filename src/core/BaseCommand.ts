@@ -42,10 +42,17 @@ export abstract class BaseCommand implements CommandInterface {
 
     abstract run(options: any): Promise<void>;
 
+    protected cli: any = null; // Use any to avoid circular import or define interface
+
+    setCli(cli: any) {
+        this.cli = cli;
+    }
+
     // Helpers
     success(msg: string) {
         logger.success(msg);
     }
+
 
     info(msg: string) {
         logger.info(msg);

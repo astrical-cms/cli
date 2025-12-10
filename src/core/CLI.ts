@@ -12,6 +12,16 @@ export class CLI {
     private cli = cac('astrical');
     private loader = new CommandLoader();
 
+    private loadedCommands: any[] = [];
+
+    getCommands() {
+        return this.loadedCommands;
+    }
+
+    getRawCLI() {
+        return this.cli;
+    }
+
     async start() {
         // In built version, we are in dist/index.js or similar
         // Commands should be in dist/commands if we build them there
@@ -39,9 +49,9 @@ export class CLI {
             // logger.debug("No commands directory found.");
         }
 
-        const commands = await this.loader.load(commandsDir);
+        this.loadedCommands = await this.loader.load(commandsDir);
 
-        for (const cmd of commands) {
+        for (const cmd of this.loadedCommands) {
             const CommandClass = cmd.class;
 
             // Construct the syntax string for CAC
@@ -54,10 +64,13 @@ export class CLI {
             const argsDef = CommandClass.args || {};
             if (argsDef.args) {
                 argsDef.args.forEach((arg: any) => {
+                    const isVariadic = arg.name.endsWith('...');
+                    const cleanName = isVariadic ? arg.name.slice(0, -3) : arg.name;
+
                     if (arg.required) {
-                        commandName += ` <${arg.name}>`;
+                        commandName += isVariadic ? ` <...${cleanName}>` : ` <${cleanName}>`;
                     } else {
-                        commandName += ` [${arg.name}]`;
+                        commandName += isVariadic ? ` [...${cleanName}]` : ` [${cleanName}]`;
                     }
                 });
             }
@@ -84,14 +97,18 @@ export class CLI {
                 const positionalArgs = args;
                 if (argsDef.args) {
                     argsDef.args.forEach((arg: any, index: number) => {
+                        const isVariadic = arg.name.endsWith('...');
+                        const name = isVariadic ? arg.name.slice(0, -3) : arg.name;
+
                         if (index < positionalArgs.length) {
-                            options[arg.name] = positionalArgs[index];
+                            options[name] = positionalArgs[index];
                         }
                     });
                 }
 
                 try {
                     const instance = new CommandClass(options);
+                    instance.setCli(this); // Inject CLI context
                     await instance.init();
                     await instance.run(options);
                 } catch (e: any) {
