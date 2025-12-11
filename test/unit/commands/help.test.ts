@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import HelpCommand from '../../../src/commands/help.js';
-import { BaseCommand } from '../../../src/core/BaseCommand.js';
 
 // Mock logger
 vi.mock('../../../src/utils/logger.js', () => ({
@@ -131,17 +130,53 @@ describe('HelpCommand', () => {
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('--force'));
     });
 
-    it('should handle registry discrepancy (loader has it, CAC does not)', async () => {
+    it('should display subcommand help when CAC command is missing (fallback to LoadedCommand)', async () => {
         const cmd = new HelpCommand();
         cmd.setCli(mockCli);
 
-        mockCli.getCommands.mockReturnValue([{ command: 'ghost', class: {} }]);
+        mockCli.getCommands.mockReturnValue([{
+            command: 'module add',
+            class: {
+                usage: 'module add <url>',
+                description: 'Add a module',
+                args: {
+                    args: [{ name: 'url', required: true, description: 'Module URL' }]
+                }
+            }
+        }]);
         mockRawCli.commands = []; // CAC doesn't know about it
 
-        await cmd.run({ command: ['ghost'] });
+        await cmd.run({ command: ['module', 'add'] });
 
-        // Should return without printing specific help, because cacCmd is missing
-        expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('Usage:'));
+        // Should print usage using the fallback logic
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Usage: module add <url>'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Add a module'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Arguments:'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Module URL'));
+    });
+
+    it('should display subcommand help with options when CAC command is missing', async () => {
+        const cmd = new HelpCommand();
+        cmd.setCli(mockCli);
+
+        mockCli.getCommands.mockReturnValue([{
+            command: 'module custom',
+            class: {
+                usage: 'module custom',
+                description: 'Custom module cmd',
+                args: {
+                    options: [
+                        { name: '--flag', description: 'A flag', default: false }
+                    ]
+                }
+            }
+        }]);
+        mockRawCli.commands = [];
+
+        await cmd.run({ command: ['module', 'custom'] });
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('--flag'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('A flag'));
     });
 
     it('should display command help with options having defaults', async () => {
@@ -203,6 +238,107 @@ describe('HelpCommand', () => {
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('module remove'));
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('module secret'));
         expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('init'));
+    });
+
+    it('should auto-generate usage if static usage is missing and CAC command is missing', async () => {
+        const cmd = new HelpCommand();
+        cmd.setCli(mockCli);
+
+        mockCli.getCommands.mockReturnValue([{
+            command: 'test cmd',
+            class: {
+                description: 'Test command',
+                args: {
+                    args: [
+                        { name: 'arg1', required: true },
+                        { name: 'arg2', required: false },
+                        { name: 'variadic...', required: false }
+                    ]
+                }
+            }
+        }]);
+        mockRawCli.commands = [];
+
+        await cmd.run({ command: ['test', 'cmd'] });
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Usage: test cmd <arg1> [arg2] [...variadic]'));
+    });
+
+    // NEW TEST CASES FOR 100% COVERAGE
+
+    it('should generate usage correctly for command with no args definitions', async () => {
+        const cmd = new HelpCommand();
+        cmd.setCli(mockCli);
+
+        // Class has no 'args' property at all
+        mockCli.getCommands.mockReturnValue([{
+            command: 'simple',
+            class: {}
+        }]);
+        mockRawCli.commands = [];
+
+        await cmd.run({ command: ['simple'] });
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Usage: simple'));
+    });
+
+    it('should fallback to CAC description if Class description is missing', async () => {
+        const cmd = new HelpCommand();
+        cmd.setCli(mockCli);
+
+        mockCli.getCommands.mockReturnValue([{
+            command: 'mixed',
+            class: { usage: 'mixed' } // has usage, no desc
+        }]);
+        mockRawCli.commands = [{
+            name: 'mixed',
+            description: 'CAC Description',
+            options: []
+        }];
+
+        await cmd.run({ command: ['mixed'] });
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('CAC Description'));
+    });
+
+    it('should default to empty description if both Class and CAC descriptions are missing', async () => {
+        const cmd = new HelpCommand();
+        cmd.setCli(mockCli);
+
+        mockCli.getCommands.mockReturnValue([{
+            command: 'nodesc',
+            class: { usage: 'nodesc' }
+        }]);
+        // CAC command undefined scenario or CAC command with no desc
+        mockRawCli.commands = [{ name: 'nodesc', options: [] }]; // no desc
+
+        await cmd.run({ command: ['nodesc'] });
+
+        // Cannot easily check for "empty line" specific to description unless we check call order or strict output
+        // But verifying it doesn't crash is good.
+        // We can check valid output presence
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Usage: nodesc'));
+    });
+
+    it('should handle required variadic arguments in usage generation', async () => {
+        const cmd = new HelpCommand();
+        cmd.setCli(mockCli);
+
+        mockCli.getCommands.mockReturnValue([{
+            command: 'variadic',
+            class: {
+                args: {
+                    args: [
+                        { name: 'files...', required: true }
+                    ]
+                }
+            }
+        }]);
+        mockRawCli.commands = [];
+
+        await cmd.run({ command: ['variadic'] });
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Usage: variadic <...files>'));
     });
 
     it('should error on unknown command', async () => {
