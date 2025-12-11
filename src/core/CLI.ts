@@ -5,6 +5,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import pc from 'picocolors';
+import pkg from '../../package.json';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -122,7 +123,7 @@ export class CLI {
         }
 
         this.cli.help();
-        this.cli.version('0.1.0');
+        this.cli.version(pkg.version);
 
         try {
             this.cli.parse();
