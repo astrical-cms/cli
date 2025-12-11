@@ -24,6 +24,14 @@ describe('InitCommand Integration', () => {
             }),
             'README.md': '# Starter Template'
         });
+
+        // Set Git Identity for the test process so InitCommand's commit works in CI
+        process.env.GIT_AUTHOR_NAME = 'Test User';
+        process.env.GIT_AUTHOR_EMAIL = 'test@example.com';
+        process.env.GIT_COMMITTER_NAME = 'Test User';
+        process.env.GIT_COMMITTER_EMAIL = 'test@example.com';
+        // Allow file protocol for local cloning in CI
+        process.env.GIT_ALLOW_PROTOCOL = 'file';
     });
 
     afterAll(async () => {
