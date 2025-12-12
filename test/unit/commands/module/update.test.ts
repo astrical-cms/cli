@@ -1,12 +1,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import ModuleUpdateCommand from '../../../../src/commands/module/update.js';
-import { logger } from '../../../../src/utils/logger.js';
-import * as shell from '../../../../src/utils/shell.js';
+import ModuleUpdateCommand from '../../../../commands/module/update.js';
+import { logger } from '../../../../core/src/utils/logger.js';
+import * as shell from '../../../../core/src/utils/shell.js';
 import fs from 'fs-extra';
 
-vi.mock('../../../../src/utils/logger.js');
-vi.mock('../../../../src/utils/shell.js');
+vi.mock('../../../../core/src/utils/logger.js');
+vi.mock('../../../../core/src/utils/shell.js');
 vi.mock('fs-extra');
 
 describe('ModuleUpdateCommand', () => {

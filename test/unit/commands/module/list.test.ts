@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import ModuleListCommand from '../../../../src/commands/module/list.js';
-import { logger } from '../../../../src/utils/logger.js';
+import ModuleListCommand from '../../../../commands/module/list.js';
+import { logger } from '../../../../core/src/utils/logger.js';
 import fs from 'fs-extra';
 import path from 'path';
-import { BaseCommand } from '../../../../src/core/BaseCommand.js';
+import { BaseCommand } from '../../../../core/src/BaseCommand.js';
 
-vi.mock('../../../../src/utils/logger.js');
+vi.mock('../../../../core/src/utils/logger.js');
 vi.mock('fs-extra');
 
 describe('ModuleListCommand', () => {

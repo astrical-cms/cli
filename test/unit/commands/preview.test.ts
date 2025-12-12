@@ -1,12 +1,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import PreviewCommand from '../../../src/commands/preview.js';
-import { logger } from '../../../src/utils/logger.js';
+import PreviewCommand from '../../../commands/preview.js';
+import { logger } from '../../../core/src/utils/logger.js';
 import fs from 'fs-extra';
 import cp from 'child_process';
 import EventEmitter from 'events';
 
-vi.mock('../../../src/utils/logger.js');
+vi.mock('../../../core/src/utils/logger.js');
 vi.mock('fs-extra');
 vi.mock('child_process');
 

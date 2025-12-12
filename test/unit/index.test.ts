@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { CLI } from '../../src/core/CLI.js';
+import { CLI } from '../../core/src/CLI.js';
 
 // Mock CLI class before import
-vi.mock('../../src/core/CLI.js', () => {
+vi.mock('../../core/src/CLI.js', () => {
     return {
         CLI: vi.fn().mockImplementation(function () {
             return {
@@ -15,7 +15,7 @@ vi.mock('../../src/core/CLI.js', () => {
 describe('Index Entry Point', () => {
     it('should instantiate and start CLI', async () => {
         // Dynamic import to trigger execution
-        await import('../../src/index.js');
+        await import('../../index.js');
 
         expect(CLI).toHaveBeenCalled();
         const instance = (CLI as any).mock.instances[0];

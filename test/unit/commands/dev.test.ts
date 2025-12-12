@@ -1,14 +1,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import DevCommand from '../../../src/commands/dev.js';
-import { logger } from '../../../src/utils/logger.js';
+import DevCommand from '../../../commands/dev.js';
+import { logger } from '../../../core/src/utils/logger.js';
 import cp from 'child_process';
 import EventEmitter from 'events';
 
-vi.mock('../../../src/utils/logger.js');
+vi.mock('../../../core/src/utils/logger.js');
 vi.mock('child_process');
 // Mock the dynamic import of environment
-vi.mock('../../../src/utils/environment.js', () => ({
+vi.mock('../../../core/src/utils/environment.js', () => ({
     prepareEnvironment: vi.fn().mockResolvedValue(undefined)
 }));
 
@@ -58,7 +58,7 @@ describe('DevCommand', () => {
 
         await command.run();
 
-        const { prepareEnvironment } = await import('../../../src/utils/environment.js');
+        const { prepareEnvironment } = await import('../../../utils/environment.js');
         expect(prepareEnvironment).toHaveBeenCalledWith('/mock/root');
 
         expect(cp.spawn).toHaveBeenCalledWith(
@@ -72,7 +72,7 @@ describe('DevCommand', () => {
     });
 
     it('should handle errors during initialization', async () => {
-        const { prepareEnvironment } = await import('../../../src/utils/environment.js');
+        const { prepareEnvironment } = await import('../../../utils/environment.js');
         vi.mocked(prepareEnvironment).mockRejectedValueOnce(new Error('Init failed'));
 
         // We need to finish the command execution somehow, or expect it to proceed?

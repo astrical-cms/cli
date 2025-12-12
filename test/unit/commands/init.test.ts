@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import InitCommand from '../../../src/commands/init.js';
-import { logger } from '../../../src/utils/logger.js';
-import * as git from '../../../src/utils/git.js';
-import * as shell from '../../../src/utils/shell.js';
+import InitCommand from '../../../commands/init.js';
+import { logger } from '../../../core/src/utils/logger.js';
+import * as git from '../../../utils/git.js';
+import * as shell from '../../../core/src/utils/shell.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
-vi.mock('../../../src/utils/logger.js');
-vi.mock('../../../src/utils/git.js');
-vi.mock('../../../src/utils/shell.js');
+vi.mock('../../../core/src/utils/logger.js');
+vi.mock('../../../utils/git.js');
+vi.mock('../../../core/src/utils/shell.js');
 vi.mock('node:fs');
 
 describe('InitCommand', () => {

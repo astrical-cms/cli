@@ -14,8 +14,12 @@
         "outDir": "./dist"
     },
     "include": [
-        "src/**/*",
-        "test/**/*"
+        "core/src/**/*",
+        "core/test/**/*",
+        "commands/**/*",
+        "utils/**/*",
+        "test/**/*",
+        "index.ts"
     ],
     "exclude": [
         "node_modules",

@@ -1,16 +1,16 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import RunCommand from '../../../src/commands/run.js';
+import RunCommand from '../../../commands/run.js';
 import fs from 'fs-extra';
 import cp from 'child_process';
 import EventEmitter from 'events';
-import { logger } from '../../../src/utils/logger.js';
+import { logger } from '../../../core/src/utils/logger.js';
 import process from 'node:process';
 
-vi.mock('../../../src/utils/logger.js');
+vi.mock('../../../core/src/utils/logger.js');
 vi.mock('fs-extra');
 vi.mock('child_process');
-vi.mock('../../../src/utils/environment.js', () => ({
+vi.mock('../../../core/src/utils/environment.js', () => ({
     prepareEnvironment: vi.fn().mockResolvedValue(undefined)
 }));
 
@@ -63,7 +63,7 @@ describe('RunCommand', () => {
         // run(script, options)
         await command.run('test', {});
 
-        const { prepareEnvironment } = await import('../../../src/utils/environment.js');
+        const { prepareEnvironment } = await import('../../../utils/environment.js');
         expect(prepareEnvironment).toHaveBeenCalled();
 
         expect(cp.spawn).toHaveBeenCalledWith('npm', ['run', 'test', '--'], expect.objectContaining({

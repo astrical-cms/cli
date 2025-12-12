@@ -1,14 +1,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import BuildCommand from '../../../src/commands/build.js';
-import { logger } from '../../../src/utils/logger.js';
+import BuildCommand from '../../../commands/build.js';
+import { logger } from '../../../core/src/utils/logger.js';
 import fs from 'fs-extra';
 // import cp from 'child_process';
-import { runCommand } from '../../../src/utils/shell.js';
+import { runCommand } from '../../../core/src/utils/shell.js';
 
-vi.mock('../../../src/utils/logger.js');
+vi.mock('../../../core/src/utils/logger.js');
 vi.mock('fs-extra');
-vi.mock('../../../src/utils/shell.js');
+vi.mock('../../../core/src/utils/shell.js');
 // vi.mock('child_process');
 
 describe('BuildCommand', () => {

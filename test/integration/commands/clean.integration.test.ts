@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
-import CleanCommand from '../../../src/commands/clean.js';
+import CleanCommand from '../../../commands/clean.js';
 import { createTempDir, cleanupTestRoot } from '../../utils/integration-helpers.js';
 import path from 'node:path';
 import fs from 'fs-extra';
-import { logger } from '../../../src/utils/logger.js';
+import { logger } from '../../../core/src/utils/logger.js';
 
 describe('CleanCommand Integration', () => {
     let tempDir: string;

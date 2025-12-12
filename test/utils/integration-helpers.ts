@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 
 // Constants
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const CLI_BIN = path.resolve(__dirname, '../../dist/index.js');
 export const TEST_ROOT = path.resolve(__dirname, '../../.test-tmp');
 
 /**
@@ -49,25 +48,3 @@ export async function createMockRepo(dir: string, initialFiles: Record<string, s
 
     return dir;
 }
-
-/**
- * Runs the CLI command against the compiled binary (E2E style)
- */
-export async function runCLI(args: string[], cwd: string, options: any = {}) {
-    return execa('node', [CLI_BIN, ...args], {
-        cwd,
-        ...options,
-        env: {
-            ...process.env,
-            ...options.env
-        },
-        reject: false // Allow checking exit code in tests
-    });
-}
-
-/**
- * Runs the CLI command by importing the Command class (Integration style)
- * Note: This might require different handling depending on how BaseCommand is structured.
- * For now, we'll assume we test logic by instantiating the Command class directly in the test file,
- * so this helper might just be for setup.
- */

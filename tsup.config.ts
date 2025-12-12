@@ -1,7 +1,7 @@
 import type { Options } from 'tsup';
 
 export default <Options>{
-    entry: ['src/index.ts', 'src/commands/**/*.ts'],
+    entry: ['index.ts', 'commands/**/*.ts', 'core/src/**/*.ts'],
     format: ['esm'],
     target: 'node18',
     clean: true,
