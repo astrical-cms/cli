@@ -90,8 +90,9 @@ export class CLI {
                     argsDef.args.forEach((arg: any) => {
                         const isVariadic = arg.name.endsWith('...');
                         const cleanName = isVariadic ? arg.name.slice(0, -3) : arg.name;
-                        if (arg.required) commandName += isVariadic ? ` <...${cleanName}>` : ` <${cleanName}>`;
-                        else commandName += isVariadic ? ` [...${cleanName}]` : ` [${cleanName}]`;
+                        // Always use optional brackets [] for CAC to allow --help to pass validation
+                        // We will enforce 'required' manually in the action handler
+                        commandName += isVariadic ? ` [...${cleanName}]` : ` [${cleanName}]`;
                     });
                 }
                 const cacCommand = this.cli.command(commandName, CommandClass.description || '');
@@ -113,14 +114,23 @@ export class CLI {
                     }
 
                     const positionalArgs = args;
+
                     if (argsDef.args) {
                         argsDef.args.forEach((arg: any, index: number) => {
                             const isVariadic = arg.name.endsWith('...');
                             const name = isVariadic ? arg.name.slice(0, -3) : arg.name;
-                            if (index < positionalArgs.length) options[name] = positionalArgs[index];
+                            const val = positionalArgs[index];
+
+                            if (val !== undefined) {
+                                options[name] = val;
+                            } else if (arg.required) {
+                                console.error(pc.red(`Missing required argument: ${name}`));
+                                this.runHelp([cmd.command]).then(() => process.exit(1));
+                                return;
+                            }
                         });
                     }
-                    await this.runCommand(CommandClass, options);
+                    await this.runCommand(CommandClass, options, [cmd.command]);
                 });
             } else {
                 // Case 2: Command with subcommands (e.g. 'module add')
@@ -172,21 +182,29 @@ export class CLI {
 
                     const childOptions = { ...options }; // Copy options
 
+                    const cmdParts = [root, subcommand];
+
                     if (argsDef.args) {
                         argsDef.args.forEach((arg: any, index: number) => {
                             const isVariadic = arg.name.endsWith('...');
                             const name = isVariadic ? arg.name.slice(0, -3) : arg.name;
-                            if (index < positionalArgs.length) {
+                            const val = positionalArgs[index];
+
+                            if (val !== undefined) {
                                 if (isVariadic) {
                                     childOptions[name] = positionalArgs.slice(index);
                                 } else {
-                                    childOptions[name] = positionalArgs[index];
+                                    childOptions[name] = val;
                                 }
+                            } else if (arg.required) {
+                                console.error(pc.red(`Missing required argument: ${name}`));
+                                this.runHelp(cmdParts).then(() => process.exit(1));
+                                return;
                             }
                         });
                     }
 
-                    await this.runCommand(CommandClass, childOptions);
+                    await this.runCommand(CommandClass, childOptions, cmdParts);
                 });
             }
         }
@@ -218,6 +236,23 @@ export class CLI {
             this.cli.parse();
         } catch (e: any) {
             console.error(pc.red(e.message));
+
+            // Try to provide helpful context
+            console.log('');
+            // Simple heuristic: find first non-flag arg as command
+            const args = process.argv.slice(2);
+            const potentialCommand = args.find(a => !a.startsWith('-'));
+            // If it matches a loaded command root, show help for it
+            // Otherwise show global help
+
+            // We need to match 'module add' etc?
+            // Just pass the potential command parts to runHelp. 
+            // runHelp handles filtering itself? No, runHelp takes commandParts to pass to HelpCommand.
+            // HelpCommand expects `command` array.
+
+            const helpArgs = potentialCommand ? [potentialCommand] : [];
+            await this.runHelp(helpArgs);
+
             process.exit(1);
         }
     }
@@ -239,7 +274,7 @@ export class CLI {
         }
     }
 
-    private async runCommand(CommandClass: any, options: any) {
+    private async runCommand(CommandClass: any, options: any, commandParts: string[] = []) {
         try {
             const instance = new CommandClass(options);
             instance.setCli(this);
@@ -248,6 +283,10 @@ export class CLI {
         } catch (e: any) {
             console.error(pc.red(e.message));
             if (options.debug) console.error(e.stack);
+
+            console.log(''); // spacer
+            await this.runHelp(commandParts);
+
             process.exit(1);
         }
     }

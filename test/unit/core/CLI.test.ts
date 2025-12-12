@@ -112,7 +112,7 @@ describe('CLI', () => {
         await cli.start();
 
         expect(mockCac.command).toHaveBeenCalledWith(
-            expect.stringContaining('test <arg1> [arg2]'),
+            expect.stringContaining('test [arg1] [arg2]'), // Changed to optional brackets
             'Mock Desc'
         );
         expect(mockCommand.option).toHaveBeenCalledWith('--opt', 'desc', { default: 'val' });
@@ -159,7 +159,7 @@ describe('CLI', () => {
         const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
-        await actionFn({}, {});
+        await actionFn('arg1', {}, {});
 
         expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Init failed'));
         expect(exitSpy).toHaveBeenCalledWith(1);
@@ -180,7 +180,7 @@ describe('CLI', () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
         vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
 
-        await actionFn({ debug: true });
+        await actionFn('arg1', { debug: true });
 
         expect(consoleSpy).toHaveBeenCalledTimes(2); // message + stack
     });
@@ -196,6 +196,41 @@ describe('CLI', () => {
         await cli.start();
 
         expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Parse error'));
+        expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should show help for detected command on global error', async () => {
+        const cli = new CLI();
+        (fs.existsSync as any).mockReturnValue(true);
+
+        const mockHelpRun = vi.fn();
+        class MockHelpCommand extends BaseCommand {
+            async run(opts: any) { mockHelpRun(opts); }
+        }
+
+        mockLoad.mockResolvedValue([
+            { command: 'help', class: MockHelpCommand, instance: new MockHelpCommand() },
+            { command: 'test', class: MockCommand, instance: new MockCommand() }
+        ]);
+
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+        const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
+
+        // Mock parse to throw
+        mockCac.parse.mockImplementation(() => { throw new Error('Global error'); });
+
+        // Mock process.argv to simulate 'test' command
+        const originalArgv = process.argv;
+        process.argv = ['node', 'cli', 'test', '--error'];
+
+        try {
+            await cli.start();
+        } finally {
+            process.argv = originalArgv;
+        }
+
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Global error'));
+        expect(mockHelpRun).toHaveBeenCalledWith({ command: ['test'] });
         expect(exitSpy).toHaveBeenCalledWith(1);
     });
     it('should handle positional arguments mapping', async () => {
@@ -587,8 +622,9 @@ describe('CLI', () => {
         // 'help' is registered first (index 0), 'test' is second (index 1)
         const actionFn = mockCommand.action.mock.calls[1][0]; // test command action
 
-        // Call action with help: true options
-        await actionFn({}, { help: true });
+        // Call action with help: true options AND NO positional args (args=[{help:true}])
+        // This ensures validation (which requires arg1) is skipped
+        await actionFn({ help: true });
 
         expect(mockHelpRun).toHaveBeenCalledWith({ command: ['test'] });
     });
@@ -644,6 +680,45 @@ describe('CLI', () => {
         // Should call with just ['mod']
         // Should call with just ['mod']
         expect(mockHelpRun).toHaveBeenCalledWith({ command: ['mod'] });
+    });
+
+    it('should validate required arguments for subcommands manually', async () => {
+        // Setup a subcommand with a required argument
+        const MockSubCommandClass = class {
+            static args = {
+                args: [{ name: 'reqArg', required: true }]
+            };
+            static description = 'Subcommand Desc';
+            setCli() { }
+            init() { return Promise.resolve(); }
+            run() { return Promise.resolve(); }
+        };
+
+        mockLoad.mockResolvedValue([
+            { command: 'module sub', class: MockSubCommandClass, instance: new MockSubCommandClass() }
+        ]);
+        (fs.existsSync as any).mockReturnValue(true);
+
+        const cli = new CLI();
+        await cli.start();
+
+        // The action handler for 'module sub'
+        // 'module' is root, 'sub' is subcommand. 
+        // We find the action handler registered for 'module [subcommand] [...args]'
+        // It should be the first one since we only loaded one command group
+        const actionFn = mockCac.command.mock.results[0].value.action.mock.calls[0][0];
+
+        const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+        const helpSpy = vi.spyOn(cli as any, 'runHelp').mockResolvedValue(undefined as any);
+
+        // Call action validation failure: subcommand='sub', options={}
+        // Missing 'reqArg' which is the first arg after subcommand
+        await actionFn('sub', {});
+
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Missing required argument: reqArg'));
+        expect(helpSpy).toHaveBeenCalledWith(['module', 'sub']);
+        expect(exitSpy).toHaveBeenCalledWith(1);
     });
 
     it('should show help when subcommand is missing (no help flag)', async () => {

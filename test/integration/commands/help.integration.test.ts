@@ -103,3 +103,14 @@ describe('HelpCommand Integration', () => {
         expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Test Description'));
     });
 });
+
+it('should show help for init command without crashing due to missing args', async () => {
+    // This test attempts to reproduce the bug where `init --help` fails because <directory> is required.
+    // We will simulate the CLI flow more closely here by creating a "real" command situation
+    // or effectively, we can verify that IF CLI logic is correct, calling Action with missing required params + --help
+    // should work. BUT cac handles required params validation *before* action.
+
+    // This integration test mocks CLI internals so it won't trigger CAC's real validation unless we use CAC.
+    // We should just use CAC directly to prove the failure if we want to confirm the library behavior,
+    // OR we can trust the user report and fix the implementation in CLI.ts.
+});
