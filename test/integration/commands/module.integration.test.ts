@@ -1,3 +1,4 @@
+import { CLI } from '@nexical/cli-core';
 import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest';
 import ModuleAddCommand from '../../../src/commands/module/add.js';
 import ModuleRemoveCommand from '../../../src/commands/module/remove.js';
@@ -7,7 +8,6 @@ import ModuleUpdateCommand from '../../../src/commands/module/update.js';
 import { createTempDir, createMockRepo, cleanupTestRoot } from '../../utils/integration-helpers.js';
 import path from 'node:path';
 import fs from 'fs-extra';
-import { execa } from 'execa';
 
 // Mock picocolors to return strings as-is for easy matching
 vi.mock('picocolors', () => ({
@@ -17,6 +17,9 @@ vi.mock('picocolors', () => ({
         yellow: (s: string) => s,
         dim: (s: string) => s,
         red: (s: string) => s,
+        green: (s: string) => s,
+        blue: (s: string) => s,
+        magenta: (s: string) => s,
     }
 }));
 
@@ -64,11 +67,12 @@ describe('Module Commands Integration', () => {
 
     it('should add, list, update and remove a module', async () => {
         const originalCwd = process.cwd();
+        const cli = new CLI({ commandName: 'astrical' });
         try {
             process.chdir(projectDir);
 
             // 1. ADD MODULE
-            const addCmd = new ModuleAddCommand();
+            const addCmd = new ModuleAddCommand(cli);
             // By default BaseCommand uses process.cwd() as projectRoot if not passed via options or search.
             // But ModuleAddCommand relies on `this.projectRoot` which is set in `init()`.
             // Integration: we need to mimic the CLI boot or manually trigger init.
@@ -89,7 +93,7 @@ describe('Module Commands Integration', () => {
             expect(gitModules).toContain('path = src/modules/my-module');
 
             // 2. LIST MODULES with valid module
-            const listCmd = new ModuleListCommand();
+            const listCmd = new ModuleListCommand(cli);
             await listCmd.init();
             await listCmd.run();
 
@@ -103,14 +107,14 @@ describe('Module Commands Integration', () => {
             ]));
 
             // 3. UPDATE MODULE
-            const updateCmd = new ModuleUpdateCommand();
+            const updateCmd = new ModuleUpdateCommand(cli);
             await updateCmd.init();
             await updateCmd.run('my-module');
             // Hard to check "update" without changing the remote first.
             // But we verify it ran without throwing.
 
             // 4. REMOVE MODULE
-            const removeCmd = new ModuleRemoveCommand();
+            const removeCmd = new ModuleRemoveCommand(cli);
             await removeCmd.init();
             await removeCmd.run('my-module');
 

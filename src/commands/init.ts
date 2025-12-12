@@ -1,10 +1,7 @@
-import { BaseCommand } from '../core/src/BaseCommand.js';
-import { CommandDefinition } from '../core/src/CommandInterface.js';
-import * as git from '../src/utils/git.js';
-import { runCommand } from '../core/src/utils/shell.js';
+import { CommandDefinition, BaseCommand, logger, runCommand } from '@nexical/cli-core';
+import * as git from '../utils/git.js';
 import fs from 'node:fs';
 import path from 'node:path';
-import { logger } from '../core/src/utils/logger.js';
 
 export default class InitCommand extends BaseCommand {
     static description = 'Initialize a new Astrical project.';

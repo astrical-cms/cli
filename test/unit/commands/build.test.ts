@@ -1,15 +1,24 @@
-
+import { logger, runCommand } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import BuildCommand from '../../../src/commands/build.js';
-import { logger } from '../../../core/src/utils/logger.js';
 import fs from 'fs-extra';
-// import cp from 'child_process';
-import { runCommand } from '../../../core/src/utils/shell.js';
 
-vi.mock('../../../core/src/utils/logger.js');
 vi.mock('fs-extra');
-vi.mock('../../../core/src/utils/shell.js');
-// vi.mock('child_process');
+
+vi.mock('@nexical/cli-core', async (importOriginal) => {
+    const mod = await importOriginal<typeof import('@nexical/cli-core')>();
+    return {
+        ...mod,
+        logger: {
+            debug: vi.fn(),
+            info: vi.fn(),
+            success: vi.fn(),
+            error: vi.fn(),
+            warn: vi.fn(),
+        },
+        runCommand: vi.fn(),
+    };
+});
 
 describe('BuildCommand', () => {
     let command: BuildCommand;
@@ -18,10 +27,19 @@ describe('BuildCommand', () => {
         vi.clearAllMocks();
         command = new BuildCommand({ rootDir: '/mock/root' });
 
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
+        // Spy on init to bypass BaseCommand logic and set projectRoot
+        vi.spyOn(command, 'init').mockImplementation(async () => {
+            (command as any).projectRoot = '/mock/root';
+        });
+
+        vi.mocked(fs.pathExists).mockResolvedValue(true as any);
         vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
         // Mock runCommand to resolve by default
         vi.mocked(runCommand).mockResolvedValue({ stdout: '', stderr: '', exitCode: 0 } as any);
+
+        // Spy on command methods
+        vi.spyOn(command, 'error').mockImplementation(() => { });
+        vi.spyOn(command, 'success').mockImplementation(() => { });
 
         await command.init();
     });
@@ -39,8 +57,11 @@ describe('BuildCommand', () => {
 
     it('should error if project root is missing', async () => {
         command = new BuildCommand({ rootDir: undefined });
+        vi.spyOn(command, 'init').mockImplementation(async () => { }); // No projectRoot set
+        vi.spyOn(command, 'error').mockImplementation(() => { });
+
         await command.run({});
-        expect(logger.error).toHaveBeenCalledWith('Project root not found.');
+        expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
     it('should error if core directory is missing', async () => {
@@ -48,7 +69,7 @@ describe('BuildCommand', () => {
             return !p.includes('src/core');
         });
         await command.run({});
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Core directory not found'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Core directory not found'));
     });
 
     it('should clean, copy files, and execute astro build', async () => {
@@ -73,7 +94,7 @@ describe('BuildCommand', () => {
             expect(filterFn('some/node_modules/path')).toBe(false);
         }
 
-        expect(logger.success).toHaveBeenCalledWith(expect.stringContaining('Build completed'));
+        expect(command.success).toHaveBeenCalledWith(expect.stringContaining('Build completed'));
     });
 
     it('should handle build failure', async () => {
@@ -81,7 +102,7 @@ describe('BuildCommand', () => {
 
         await command.run({});
 
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Build failed'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Build failed'), 1);
     });
 
     it('should skip copying if path does not exist', async () => {

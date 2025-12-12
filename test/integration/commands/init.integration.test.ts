@@ -1,3 +1,4 @@
+import { CLI } from '@nexical/cli-core';
 import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import InitCommand from '../../../src/commands/init.js';
 import { createTempDir, createMockRepo, cleanupTestRoot } from '../../utils/integration-helpers.js';
@@ -42,8 +43,9 @@ describe('InitCommand Integration', () => {
     it('should initialize a new project from a local git repo', async () => {
         const targetProjectName = 'my-new-project';
         const targetPath = path.join(tempDir, targetProjectName);
+        const cli = new CLI({ commandName: 'astrical' });
 
-        const command = new InitCommand();
+        const command = new InitCommand(cli);
 
         // Capture stdout/stderr? InitCommand uses consola.
         // For integration, we care about the FS side effects.

@@ -1,9 +1,9 @@
+import { CLI } from '@nexical/cli-core';
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import CleanCommand from '../../../src/commands/clean.js';
 import { createTempDir, cleanupTestRoot } from '../../utils/integration-helpers.js';
 import path from 'node:path';
 import fs from 'fs-extra';
-import { logger } from '../../../core/src/utils/logger.js';
 
 describe('CleanCommand Integration', () => {
     let tempDir: string;
@@ -22,7 +22,8 @@ describe('CleanCommand Integration', () => {
     });
 
     it('should remove dist and node_modules directories', async () => {
-        const command = new CleanCommand();
+        const cli = new CLI({ commandName: 'astrical' });
+        const command = new CleanCommand(cli);
         // CleanCommand usually runs in process.cwd(), so we need to mock that or pass directory if supported.
         // Checking clean.ts implementation... it uses process.cwd().
         // We can spy spy process.cwd() or similar.
@@ -34,7 +35,7 @@ describe('CleanCommand Integration', () => {
         try {
             process.chdir(tempDir);
 
-            await command.run({});
+            await command.run();
 
             expect(fs.existsSync(path.join(tempDir, 'dist'))).toBe(false);
             // clean command removes node_modules/.vite, not the whole node_modules

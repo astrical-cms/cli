@@ -1,11 +1,9 @@
-
-import { BaseCommand } from '../core/src/BaseCommand.js';
+import { BaseCommand, logger } from '@nexical/cli-core';
 import fs from 'fs-extra';
 import path from 'path';
 import { spawn } from 'child_process';
 import process from 'node:process';
-import { prepareEnvironment } from '../src/utils/environment.js';
-import { logger } from '../core/src/utils/logger.js';
+import { prepareEnvironment } from '../utils/environment.js';
 
 export default class RunCommand extends BaseCommand {
     static paths = [['run']];

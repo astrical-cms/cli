@@ -1,8 +1,6 @@
-
-import { BaseCommand } from '../core/src/BaseCommand.js';
+import { BaseCommand, logger } from '@nexical/cli-core';
 import fs from 'fs-extra';
 import path from 'path';
-import { logger } from '../core/src/utils/logger.js';
 
 export default class CleanCommand extends BaseCommand {
     static paths = [['clean']];

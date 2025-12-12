@@ -1,14 +1,40 @@
+import { logger, runCommand } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import InitCommand from '../../../src/commands/init.js';
-import { logger } from '../../../core/src/utils/logger.js';
 import * as git from '../../../src/utils/git.js';
-import * as shell from '../../../core/src/utils/shell.js';
 import fs from 'node:fs';
-import path from 'node:path';
 
-vi.mock('../../../core/src/utils/logger.js');
-vi.mock('../../../utils/git.js');
-vi.mock('../../../core/src/utils/shell.js');
+vi.mock('@nexical/cli-core', async (importOriginal) => {
+    const mod = await importOriginal<typeof import('@nexical/cli-core')>();
+    return {
+        ...mod,
+        runCommand: vi.fn(),
+        logger: { code: vi.fn(), debug: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn(), warn: vi.fn() }
+    }
+});
+vi.mock('../../../src/utils/git.js');
+vi.mock('node:fs');
+
+vi.mock('@nexical/cli-core', async (importOriginal) => {
+    const mod = await importOriginal<typeof import('@nexical/cli-core')>();
+    return {
+        ...mod,
+        runCommand: vi.fn(),
+        logger: { code: vi.fn(), debug: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn(), warn: vi.fn() }
+    }
+});
+
+vi.mock('../../../src/utils/git.js', () => ({
+    clone: vi.fn(),
+    updateSubmodules: vi.fn(),
+    checkoutOrphan: vi.fn(),
+    addAll: vi.fn(),
+    commit: vi.fn(),
+    deleteBranch: vi.fn(),
+    renameBranch: vi.fn(),
+    removeRemote: vi.fn()
+}));
+
 vi.mock('node:fs');
 
 describe('InitCommand', () => {
@@ -20,6 +46,10 @@ describe('InitCommand', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         command = new InitCommand({});
+
+        vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'info').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'success').mockImplementation((() => { }) as any);
         // Default fs mocks
         vi.mocked(fs.existsSync).mockReturnValue(false);
         vi.mocked(fs.mkdirSync).mockReturnValue(undefined);
@@ -54,7 +84,7 @@ describe('InitCommand', () => {
         expect(git.updateSubmodules).toHaveBeenCalledWith(expect.stringContaining(targetDir));
 
         // Npm install
-        expect(shell.runCommand).toHaveBeenCalledWith(
+        expect(runCommand).toHaveBeenCalledWith(
             'npm install',
             expect.stringContaining(targetDir)
         );
@@ -67,7 +97,7 @@ describe('InitCommand', () => {
         expect(git.renameBranch).toHaveBeenCalledWith('main', expect.stringContaining(targetDir));
         expect(git.removeRemote).toHaveBeenCalledWith('origin', expect.stringContaining(targetDir));
 
-        expect(logger.success).toHaveBeenCalledWith(expect.stringContaining('successfully'));
+        expect(command.success).toHaveBeenCalledWith(expect.stringContaining('successfully'));
     });
 
     it('should handle gh@ syntax', async () => {
@@ -98,7 +128,7 @@ describe('InitCommand', () => {
         await expect(command.run({ directory: 'existing-dir', repo: 'foo' }))
             .rejects.toThrow('Process.exit(1)');
 
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('not empty'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('not empty'));
     });
 
     it('should handle git errors gracefully', async () => {
@@ -107,6 +137,6 @@ describe('InitCommand', () => {
         await expect(command.run({ directory: 'fail-project', repo: 'foo' }))
             .rejects.toThrow('Process.exit(1)');
 
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to initialize project'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Failed to initialize project'));
     });
 });

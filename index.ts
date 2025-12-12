@@ -1,12 +1,14 @@
 #!/usr/bin/env node
-import { CLI } from './core/src/CLI.js';
+import { CLI, logger } from '@nexical/cli-core';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { logger } from './core/src/utils/logger.js';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 logger.debug('CLI ENTRY POINT HIT', process.argv);
 
 const app = new CLI({
     commandName: 'astrical',
-    searchDirectories: ['commands']
+    searchDirectories: [path.resolve(__dirname, './src/commands'),]
 });
 app.start();

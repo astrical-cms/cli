@@ -1,5 +1,4 @@
-import { runCommand } from '../core/src/utils/shell.js';
-import { logger } from '../core/src/utils/logger.js';
+import { logger, runCommand } from '@nexical/cli-core';
 
 export async function clone(url: string, destination: string, recursive = false): Promise<void> {
     const cmd = `git clone ${recursive ? '--recursive ' : ''}${url} .`;

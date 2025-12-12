@@ -2,7 +2,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { prepareEnvironment } from '../../../src/utils/environment.js';
 import fs from 'fs-extra';
-import path from 'path';
 
 vi.mock('fs-extra');
 vi.mock('../../../src/utils/logger.js');
@@ -70,7 +69,7 @@ describe('prepareEnvironment', () => {
     });
 
     it('should throw if core directory is missing', async () => {
-        vi.mocked(fs.pathExists).mockResolvedValue(false);
+        vi.mocked(fs.pathExists as unknown as (path: string) => Promise<boolean>).mockResolvedValue(false);
         await expect(prepareEnvironment(mockRoot)).rejects.toThrow('Core directory not found');
     });
 

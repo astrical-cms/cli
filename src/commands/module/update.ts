@@ -1,9 +1,6 @@
-
-import { BaseCommand } from '../../core/src/BaseCommand.js';
+import { BaseCommand, logger, runCommand } from '@nexical/cli-core';
 import fs from 'fs-extra';
 import path from 'path';
-import { runCommand } from '../../core/src/utils/shell.js';
-import { logger } from '../../core/src/utils/logger.js';
 
 export default class ModuleUpdateCommand extends BaseCommand {
     static paths = [['module', 'update']];

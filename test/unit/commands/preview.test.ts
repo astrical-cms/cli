@@ -1,12 +1,17 @@
-
+import { logger } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import PreviewCommand from '../../../src/commands/preview.js';
-import { logger } from '../../../core/src/utils/logger.js';
 import fs from 'fs-extra';
 import cp from 'child_process';
 import EventEmitter from 'events';
 
-vi.mock('../../../core/src/utils/logger.js');
+vi.mock('@nexical/cli-core', async (importOriginal) => {
+    const mod = await importOriginal<typeof import('@nexical/cli-core')>();
+    return {
+        ...mod,
+        logger: { code: vi.fn(), debug: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn(), warn: vi.fn() }
+    }
+});
 vi.mock('fs-extra');
 vi.mock('child_process');
 
@@ -16,13 +21,18 @@ describe('PreviewCommand', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        command = new PreviewCommand({ rootDir: '/mock/root' });
+        command = new PreviewCommand({}, { rootDir: '/mock/root' });
 
         mockChild = new EventEmitter();
         mockChild.kill = vi.fn();
         mockChild.stdout = new EventEmitter();
         mockChild.stderr = new EventEmitter();
         vi.mocked(cp.spawn).mockReturnValue(mockChild as any);
+
+        vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'info').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'warn').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'success').mockImplementation((() => { }) as any);
 
         vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
         await command.init();
@@ -40,13 +50,14 @@ describe('PreviewCommand', () => {
     });
 
     it('should error if project root is missing', async () => {
-        command = new PreviewCommand({ rootDir: undefined });
+        command = new PreviewCommand({}, { rootDir: undefined });
+        vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
         await command.run();
-        expect(logger.error).toHaveBeenCalledWith('Project root not found.');
+        expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
     it('should spawn astro preview if dist exists', async () => {
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
+        vi.mocked(fs.pathExists).mockResolvedValue(true as any);
         setTimeout(() => {
             mockChild.emit('close', 0);
         }, 100);
@@ -63,26 +74,26 @@ describe('PreviewCommand', () => {
     });
 
     it('should error if dist does not exist', async () => {
-        vi.mocked(fs.pathExists).mockResolvedValue(false);
+        vi.mocked(fs.pathExists).mockResolvedValue(false as any);
 
         await command.run();
 
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Please run'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Please run'));
         expect(cp.spawn).not.toHaveBeenCalled();
     });
 
     it('should handle spawn error', async () => {
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
+        vi.mocked(fs.pathExists).mockResolvedValue(true as any);
         setTimeout(() => {
             mockChild.emit('error', new Error('Spawn failed'));
             mockChild.emit('close', 1);
         }, 100);
         await command.run();
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to start preview'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Failed to start preview'));
     });
 
     it('should handle cleanup signals', async () => {
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
+        vi.mocked(fs.pathExists).mockResolvedValue(true as any);
         const listeners: Record<string, Function> = {};
         vi.spyOn(process, 'on').mockImplementation((event: string | symbol, listener: any) => {
             listeners[event.toString()] = listener;

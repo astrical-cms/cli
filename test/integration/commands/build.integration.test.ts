@@ -1,3 +1,4 @@
+import { CLI } from '@nexical/cli-core';
 import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest';
 import BuildCommand from '../../../src/commands/build.js';
 import { createTempDir, cleanupTestRoot } from '../../utils/integration-helpers.js';
@@ -57,10 +58,11 @@ describe('BuildCommand Integration', () => {
     });
 
     it('should assemble environment and spawn astro build', async () => {
-        const command = new BuildCommand();
+        const cli = new CLI({ commandName: 'astrical' });
+        const command = new BuildCommand(cli);
         Object.assign(command, { projectRoot: projectDir });
 
-        await command.run();
+        await command.run({});
 
         // 1. Verify _site assembly
         const siteDir = path.join(projectDir, '_site');

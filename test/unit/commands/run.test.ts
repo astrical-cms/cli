@@ -1,16 +1,21 @@
-
+import { logger } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import RunCommand from '../../../src/commands/run.js';
 import fs from 'fs-extra';
 import cp from 'child_process';
 import EventEmitter from 'events';
-import { logger } from '../../../core/src/utils/logger.js';
 import process from 'node:process';
 
-vi.mock('../../../core/src/utils/logger.js');
+vi.mock('@nexical/cli-core', async (importOriginal) => {
+    const mod = await importOriginal<typeof import('@nexical/cli-core')>();
+    return {
+        ...mod,
+        logger: { code: vi.fn(), debug: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn(), warn: vi.fn() }
+    }
+});
 vi.mock('fs-extra');
 vi.mock('child_process');
-vi.mock('../../../core/src/utils/environment.js', () => ({
+vi.mock('../../../src/utils/environment.js', () => ({
     prepareEnvironment: vi.fn().mockResolvedValue(undefined)
 }));
 
@@ -21,13 +26,18 @@ describe('RunCommand', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        command = new RunCommand({ rootDir: '/mock/root' });
+        command = new RunCommand({}, { rootDir: '/mock/root' });
 
         mockChild = new EventEmitter();
         mockChild.kill = vi.fn();
         mockChild.stdout = new EventEmitter();
         mockChild.stderr = new EventEmitter();
         vi.mocked(cp.spawn).mockReturnValue(mockChild as any);
+
+        vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'info').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'success').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'warn').mockImplementation((() => { }) as any);
 
         await command.init();
         mockExit = vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
@@ -45,14 +55,15 @@ describe('RunCommand', () => {
     });
 
     it('should error if project root is missing', async () => {
-        command = new RunCommand({ rootDir: undefined });
+        command = new RunCommand({}, { rootDir: undefined });
+        vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
         await command.run('script', {});
-        expect(logger.error).toHaveBeenCalledWith('Project root not found.');
+        expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
     it('should error if script is missing', async () => {
         await command.run(undefined as any, {});
-        expect(logger.error).toHaveBeenCalledWith('Please specify a script to run.');
+        expect(command.error).toHaveBeenCalledWith('Please specify a script to run.');
     });
 
     it('should run core script via npm', async () => {
@@ -94,6 +105,7 @@ describe('RunCommand', () => {
         ]), expect.objectContaining({
             cwd: expect.stringContaining('_site')
         }));
+        expect(command.info).toHaveBeenCalledWith(expect.stringContaining('Running module script'));
     });
 
     it('should handle module script read error', async () => {
@@ -110,7 +122,7 @@ describe('RunCommand', () => {
 
         await command.run('stripe:sync', {});
 
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to read package.json'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Failed to read package.json'));
     });
 
     it('should ignore module script if package.json missing', async () => {
@@ -183,7 +195,7 @@ describe('RunCommand', () => {
         await command.run('mymod:missing', {});
 
         // Should NOT run module script logic (no "Running module script" log)
-        expect(logger.info).not.toHaveBeenCalledWith(expect.stringContaining('Running module script'));
+        expect(command.info).not.toHaveBeenCalledWith(expect.stringContaining('Running module script'));
         expect(cp.spawn).toHaveBeenCalledWith('npm', ['run', 'mymod:missing', '--'], expect.any(Object));
     });
 

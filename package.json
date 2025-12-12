@@ -16,7 +16,7 @@
         "test:watch": "vitest"
     },
     "dependencies": {
-        "@nexical/cli-core": "^0.1.1"
+        "@nexical/cli-core": "^0.1.4"
     },
     "devDependencies": {
         "@types/fs-extra": "^11.0.4",

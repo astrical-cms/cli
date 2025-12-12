@@ -1,14 +1,19 @@
-
+import { logger } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import DevCommand from '../../../src/commands/dev.js';
-import { logger } from '../../../core/src/utils/logger.js';
 import cp from 'child_process';
 import EventEmitter from 'events';
 
-vi.mock('../../../core/src/utils/logger.js');
+vi.mock('@nexical/cli-core', async (importOriginal) => {
+    const mod = await importOriginal<typeof import('@nexical/cli-core')>();
+    return {
+        ...mod,
+        logger: { code: vi.fn(), debug: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn(), warn: vi.fn() }
+    }
+});
 vi.mock('child_process');
 // Mock the dynamic import of environment
-vi.mock('../../../core/src/utils/environment.js', () => ({
+vi.mock('../../../src/utils/environment.js', () => ({
     prepareEnvironment: vi.fn().mockResolvedValue(undefined)
 }));
 
@@ -18,7 +23,11 @@ describe('DevCommand', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        command = new DevCommand({ rootDir: '/mock/root' });
+        command = new DevCommand({}, { rootDir: '/mock/root' });
+
+        vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'info').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'warn').mockImplementation((() => { }) as any);
 
         // Mock spawn to return an event emitter
         mockChild = new EventEmitter();
@@ -45,9 +54,10 @@ describe('DevCommand', () => {
     });
 
     it('should error if project root is missing', async () => {
-        command = new DevCommand({ rootDir: undefined });
+        command = new DevCommand({}, { rootDir: undefined });
+        vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
         await command.run();
-        expect(logger.error).toHaveBeenCalledWith('Project root not found.');
+        expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
     it('should initialize environment and spawn astro dev', async () => {
@@ -84,7 +94,7 @@ describe('DevCommand', () => {
 
         await command.run();
 
-        expect(logger.error).toHaveBeenCalledWith('Init failed');
+        expect(command.error).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it('should handle spawn error', async () => {
@@ -95,7 +105,7 @@ describe('DevCommand', () => {
         mockChild.emit('close', 1);
 
         await runPromise;
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to start Astro'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Failed to start Astro'));
     });
 
     it('should handle cleanup signals', async () => {

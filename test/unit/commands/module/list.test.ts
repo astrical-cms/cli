@@ -1,11 +1,23 @@
+import { BaseCommand, logger } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ModuleListCommand from '../../../../src/commands/module/list.js';
-import { logger } from '../../../../core/src/utils/logger.js';
 import fs from 'fs-extra';
-import path from 'path';
-import { BaseCommand } from '../../../../core/src/BaseCommand.js';
 
-vi.mock('../../../../core/src/utils/logger.js');
+vi.mock('@nexical/cli-core', async (importOriginal) => {
+    const mod = await importOriginal<typeof import('@nexical/cli-core')>();
+    return {
+        ...mod,
+        logger: {
+            ...mod.logger,
+            success: vi.fn(),
+            info: vi.fn(),
+            debug: vi.fn(),
+            error: vi.fn(),
+            warn: vi.fn(),
+        },
+        runCommand: vi.fn(),
+    };
+});
 vi.mock('fs-extra');
 
 describe('ModuleListCommand', () => {
@@ -14,9 +26,15 @@ describe('ModuleListCommand', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        command = new ModuleListCommand({ rootDir: '/mock/root' });
+        command = new ModuleListCommand({}, { rootDir: '/mock/root' });
         consoleTableSpy = vi.spyOn(console, 'table').mockImplementation(() => { });
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
+        vi.spyOn(command, 'error').mockImplementation(() => { });
+        vi.spyOn(command, 'success').mockImplementation(() => { });
+        vi.spyOn(command, 'info').mockImplementation(() => { });
+        vi.mocked(fs.pathExists).mockImplementation(async (p: any) => {
+            if (p.includes('app.yml') || p.includes('astrical.yml')) return true;
+            return true;
+        });
         vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
         await command.init();
     });
@@ -33,27 +51,29 @@ describe('ModuleListCommand', () => {
     });
 
     it('should error if project root is missing', async () => {
-        command = new ModuleListCommand({ rootDir: undefined });
+        command = new ModuleListCommand({}, { rootDir: undefined });
+        vi.spyOn(command, 'error').mockImplementation(() => { });
         await command.run();
-        expect(logger.error).toHaveBeenCalledWith('Project root not found.');
+        expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
     it('should handle missing modules directory', async () => {
-        vi.mocked(fs.pathExists).mockResolvedValue(false);
+        vi.mocked(fs.pathExists).mockImplementation(async () => false);
         await command.run();
-        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('No modules installed'));
+        expect(command.info).toHaveBeenCalledWith(expect.stringContaining('No modules installed'));
     });
 
     it('should list modules with details', async () => {
         vi.mocked(fs.readdir).mockResolvedValue(['mod1', 'file.txt', 'mod2', 'mod3', 'mod4'] as any);
         // Mock directory check: mod1=dir, file.txt=file, mod2=dir, mod3=dir
-        vi.mocked(fs.stat).mockImplementation(async (p: string) => ({
+        vi.mocked(fs.stat).mockImplementation(async (p: any) => ({
             isDirectory: () => !p.includes('file.txt')
         } as any));
 
         // Mock package.json existence: mod1=yes, mod2=no, mod3=yes
         // Also ensure modules directory itself exists!
-        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
+        vi.mocked(fs.pathExists).mockImplementation(async (p: any) => {
+            if (p.includes('app.yml') || p.includes('astrical.yml')) return true;
             if (p.endsWith('src/modules')) return true;
             return p.includes('package.json') && !p.includes('mod2');
         });
@@ -83,12 +103,12 @@ describe('ModuleListCommand', () => {
     it('should handle empty modules directory', async () => {
         vi.mocked(fs.readdir).mockResolvedValue([]);
         await command.run();
-        expect(logger.info).toHaveBeenCalledWith('No modules installed.');
+        expect(command.info).toHaveBeenCalledWith('No modules installed.');
     });
 
     it('should handle failure during list', async () => {
         vi.mocked(fs.readdir).mockRejectedValue(new Error('FS Error'));
         await command.run();
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to list modules'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Failed to list modules'));
     });
 });

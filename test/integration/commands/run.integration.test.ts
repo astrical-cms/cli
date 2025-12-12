@@ -1,3 +1,4 @@
+import { CLI } from '@nexical/cli-core';
 import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest';
 import RunCommand from '../../../src/commands/run.js';
 import { createTempDir } from '../../utils/integration-helpers.js';
@@ -8,6 +9,7 @@ import EventEmitter from 'events';
 
 vi.mock('child_process', () => ({
     spawn: vi.fn(),
+    exec: vi.fn(),
 }));
 
 describe('RunCommand Integration', () => {
@@ -49,7 +51,8 @@ describe('RunCommand Integration', () => {
     });
 
     it('should run standard npm scripts', async () => {
-        const command = new RunCommand();
+        const cli = new CLI({ commandName: 'astrical' });
+        const command = new RunCommand(cli);
         Object.assign(command, { projectRoot: projectDir });
 
         await command.run('test-script', '--flag', {}); // Add options object
@@ -64,7 +67,8 @@ describe('RunCommand Integration', () => {
     });
 
     it('should run module specific scripts', async () => {
-        const command = new RunCommand();
+        const cli = new CLI({ commandName: 'astrical' });
+        const command = new RunCommand(cli);
         Object.assign(command, { projectRoot: projectDir });
 
         await command.run('my-auth:seed', '--force', {}); // Add options object

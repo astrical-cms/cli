@@ -1,10 +1,7 @@
-
-import { BaseCommand } from '../core/src/BaseCommand.js';
-import fs from 'fs-extra';
+import { BaseCommand, logger } from '@nexical/cli-core';
 import path from 'path';
 import { spawn } from 'child_process';
 import process from 'node:process';
-import { logger } from '../core/src/utils/logger.js';
 
 export default class DevCommand extends BaseCommand {
     static paths = [['dev']];
@@ -23,7 +20,7 @@ export default class DevCommand extends BaseCommand {
         this.info('Initializing ephemeral build environment...');
 
         try {
-            const { prepareEnvironment } = await import('../src/utils/environment.js');
+            const { prepareEnvironment } = await import('../utils/environment.js');
             logger.debug(`Preparing environment at: ${this.projectRoot}`);
             await prepareEnvironment(this.projectRoot);
         } catch (error: any) {

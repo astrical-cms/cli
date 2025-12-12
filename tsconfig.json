@@ -14,8 +14,6 @@
         "outDir": "./dist"
     },
     "include": [
-        "core/src/**/*",
-        "core/test/**/*",
         "src/commands/**/*",
         "src/utils/**/*",
         "test/**/*",

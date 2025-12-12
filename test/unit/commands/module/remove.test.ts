@@ -1,12 +1,23 @@
-
+import { logger, runCommand } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ModuleRemoveCommand from '../../../../src/commands/module/remove.js';
-import { logger } from '../../../../core/src/utils/logger.js';
-import * as shell from '../../../../core/src/utils/shell.js';
 import fs from 'fs-extra';
 
-vi.mock('../../../../core/src/utils/logger.js');
-vi.mock('../../../../core/src/utils/shell.js');
+vi.mock('@nexical/cli-core', async (importOriginal) => {
+    const mod = await importOriginal<typeof import('@nexical/cli-core')>();
+    return {
+        ...mod,
+        logger: {
+            ...mod.logger,
+            success: vi.fn(),
+            info: vi.fn(),
+            debug: vi.fn(),
+            error: vi.fn(),
+            warn: vi.fn(),
+        },
+        runCommand: vi.fn(),
+    };
+});
 vi.mock('fs-extra');
 
 describe('ModuleRemoveCommand', () => {
@@ -14,8 +25,14 @@ describe('ModuleRemoveCommand', () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
-        command = new ModuleRemoveCommand({ rootDir: '/mock/root' });
-        vi.mocked(fs.pathExists).mockResolvedValue(true);
+        command = new ModuleRemoveCommand({}, { rootDir: '/mock/root' });
+        vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'success').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'info').mockImplementation((() => { }) as any);
+        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
+            if (p.includes('app.yml') || p.includes('astrical.yml')) return true;
+            return true;
+        });
         vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
         await command.init();
     });
@@ -33,30 +50,31 @@ describe('ModuleRemoveCommand', () => {
     });
 
     it('should error if project root is missing', async () => {
-        command = new ModuleRemoveCommand({ rootDir: undefined });
+        command = new ModuleRemoveCommand({}, { rootDir: undefined });
+        vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
         await command.run('mod');
-        expect(logger.error).toHaveBeenCalledWith('Project root not found.');
+        expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
     it('should remove submodule and sync', async () => {
         await command.run('mod');
 
-        expect(shell.runCommand).toHaveBeenCalledWith(expect.stringContaining('git submodule deinit'), '/mock/root');
-        expect(shell.runCommand).toHaveBeenCalledWith(expect.stringContaining('git rm'), '/mock/root');
+        expect(runCommand).toHaveBeenCalledWith(expect.stringContaining('git submodule deinit'), '/mock/root');
+        expect(runCommand).toHaveBeenCalledWith(expect.stringContaining('git rm'), '/mock/root');
         expect(fs.remove).toHaveBeenCalledWith(expect.stringContaining('.git/modules'));
-        expect(shell.runCommand).toHaveBeenCalledWith('npm install', '/mock/root');
+        expect(runCommand).toHaveBeenCalledWith('npm install', '/mock/root');
     });
 
     it('should error if module not found', async () => {
-        vi.mocked(fs.pathExists).mockResolvedValue(false);
+        vi.mocked(fs.pathExists).mockImplementation(async () => false);
         await command.run('missing');
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('not found'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('not found'));
     });
 
     it('should handle failure during remove', async () => {
-        vi.mocked(shell.runCommand).mockRejectedValue(new Error('Git remove failed'));
+        vi.mocked(runCommand).mockRejectedValue(new Error('Git remove failed'));
         await command.run('mod');
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to remove module'));
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Failed to remove module'));
     });
 
     it('should skip .git/modules cleanup if not found', async () => {

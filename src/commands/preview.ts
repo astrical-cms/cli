@@ -1,10 +1,8 @@
-
-import { BaseCommand } from '../../core/src/BaseCommand.js';
+import { BaseCommand, logger } from '@nexical/cli-core';
 import fs from 'fs-extra';
 import path from 'path';
 import { spawn } from 'child_process';
 import process from 'node:process';
-import { logger } from '../../core/src/utils/logger.js';
 
 export default class PreviewCommand extends BaseCommand {
     static paths = [['preview']];

@@ -1,3 +1,4 @@
+import { CLI } from '@nexical/cli-core';
 import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest';
 import DevCommand from '../../../src/commands/dev.js';
 import PreviewCommand from '../../../src/commands/preview.js';
@@ -9,6 +10,7 @@ import EventEmitter from 'events';
 
 vi.mock('child_process', () => ({
     spawn: vi.fn(),
+    exec: vi.fn(),
 }));
 
 describe('Dev/Preview Integration', () => {
@@ -42,7 +44,8 @@ describe('Dev/Preview Integration', () => {
     });
 
     it('dev command should spawn astro dev', async () => {
-        const command = new DevCommand();
+        const cli = new CLI({ commandName: 'astrical' });
+        const command = new DevCommand(cli);
         Object.assign(command, { projectRoot: projectDir });
 
         await command.run();
@@ -57,7 +60,8 @@ describe('Dev/Preview Integration', () => {
     });
 
     it('preview command should spawn astro preview', async () => {
-        const command = new PreviewCommand();
+        const cli = new CLI({ commandName: 'astrical' });
+        const command = new PreviewCommand(cli);
         Object.assign(command, { projectRoot: projectDir });
 
         await command.run();
