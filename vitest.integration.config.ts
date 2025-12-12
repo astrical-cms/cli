@@ -8,6 +8,11 @@ export default defineConfig({
         // Increase timeout for integration tests as they do real IO
         testTimeout: 60000,
         fileParallelism: false,
+        server: {
+            deps: {
+                inline: ['@nexical/cli-core'],
+            },
+        },
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
