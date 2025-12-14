@@ -71,4 +71,12 @@ describe('git utils', () => {
         await git.removeRemote('origin', 'cwd');
         expect(runCommand).toHaveBeenCalledWith('git remote remove origin', 'cwd');
     });
+
+    it('should check if branch exists', async () => {
+        vi.mocked(runCommand).mockResolvedValueOnce('hash refs/heads/branch');
+        expect(await git.branchExists('branch', 'cwd')).toBe(true);
+
+        vi.mocked(runCommand).mockRejectedValueOnce(new Error('fail'));
+        expect(await git.branchExists('branch', 'cwd')).toBe(false);
+    });
 });

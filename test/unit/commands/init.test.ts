@@ -32,7 +32,8 @@ vi.mock('../../../src/utils/git.js', () => ({
     commit: vi.fn(),
     deleteBranch: vi.fn(),
     renameBranch: vi.fn(),
-    removeRemote: vi.fn()
+    removeRemote: vi.fn(),
+    branchExists: vi.fn()
 }));
 
 vi.mock('node:fs');
@@ -73,6 +74,7 @@ describe('InitCommand', () => {
 
     it('should initialize project with default repo', async () => {
         const targetDir = 'new-project';
+        vi.mocked(git.branchExists).mockResolvedValue(true);
         await command.run({ directory: targetDir, repo: 'https://default.com/repo' });
 
         expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining(targetDir), { recursive: true });
@@ -90,9 +92,18 @@ describe('InitCommand', () => {
         );
 
         // History wipe
+        vi.mocked(git.branchExists).mockResolvedValue(true);
+
         expect(git.checkoutOrphan).toHaveBeenCalledWith('new-main', expect.stringContaining(targetDir));
         expect(git.addAll).toHaveBeenCalledWith(expect.stringContaining(targetDir));
         expect(git.commit).toHaveBeenCalledWith('Initial commit', expect.stringContaining(targetDir));
+
+        // Wait for potential async calls to finish
+        // We need to re-trigger or rely on the previous run, but here we can just verify
+        // since the run call finished
+        expect(git.branchExists).toHaveBeenCalledWith('main', expect.stringContaining(targetDir));
+        expect(git.branchExists).toHaveBeenCalledWith('master', expect.stringContaining(targetDir));
+
         expect(git.deleteBranch).toHaveBeenCalledTimes(2); // main and master
         expect(git.renameBranch).toHaveBeenCalledWith('main', expect.stringContaining(targetDir));
         expect(git.removeRemote).toHaveBeenCalledWith('origin', expect.stringContaining(targetDir));

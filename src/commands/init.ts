@@ -13,7 +13,7 @@ export default class InitCommand extends BaseCommand {
             {
                 name: '--repo <url>',
                 description: 'Starter repository URL (supports gh@owner/repo syntax)',
-                default: 'https://github.com/nexical/astrical-starter'
+                default: 'gh@astrical-cms/starter'
             }
         ]
     };
@@ -61,9 +61,13 @@ export default class InitCommand extends BaseCommand {
             await git.addAll(targetPath);
             await git.commit('Initial commit', targetPath);
 
-            // Delete old main/master (try both common names, catch error if one fails)
-            try { await git.deleteBranch('main', targetPath); } catch { }
-            try { await git.deleteBranch('master', targetPath); } catch { }
+            // Delete old main/master (check if they exist first to avoid errors)
+            if (await git.branchExists('main', targetPath)) {
+                await git.deleteBranch('main', targetPath);
+            }
+            if (await git.branchExists('master', targetPath)) {
+                await git.deleteBranch('master', targetPath);
+            }
 
             await git.renameBranch('main', targetPath);
             await git.removeRemote('origin', targetPath);
