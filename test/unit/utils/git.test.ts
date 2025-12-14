@@ -2,6 +2,10 @@ import { runCommand } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as git from '../../../src/utils/git.js';
 
+const mocks = vi.hoisted(() => ({
+    exec: vi.fn(),
+}));
+
 vi.mock('@nexical/cli-core', async (importOriginal) => {
     const mod = await importOriginal<typeof import('@nexical/cli-core')>();
     return {
@@ -11,72 +15,126 @@ vi.mock('@nexical/cli-core', async (importOriginal) => {
     }
 });
 
+vi.mock('node:child_process', () => ({
+    exec: mocks.exec,
+}));
+
+vi.mock('node:util', async () => {
+    const actual = await vi.importActual<any>('node:util');
+    return {
+        ...actual,
+        promisify: (fn: Function) => {
+            return (...args: any[]) => new Promise((resolve, reject) => {
+                fn(...args, (err: Error | null, ...values: any[]) => {
+                    if (err) return reject(err);
+                    // Handle exec-like signature (stdout, stderr) -> { stdout, stderr }
+                    // Simple heuristic: if values.length > 1, assume explicit mapping needed?
+                    // Or just hardcode for our known usage (exec).
+                    if (values.length >= 2) {
+                        resolve({ stdout: values[0], stderr: values[1] });
+                    } else {
+                        resolve(values[0]);
+                    }
+                });
+            });
+        }
+    };
+});
+
 describe('git utils', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    afterEach(() => {
-        vi.resetAllMocks();
-    });
-
     it('should clone repository', async () => {
-        await git.clone('http://repo.git', 'dest', true);
+        await git.clone('http://repo.git', 'dest', { recursive: true });
         expect(runCommand).toHaveBeenCalledWith(
             'git clone --recursive http://repo.git .',
             'dest'
         );
+    });
 
-        await git.clone('http://repo.git', 'dest', false);
+    it('should clone repository with depth', async () => {
+        await git.clone('http://repo.git', 'dest', { depth: 1 });
         expect(runCommand).toHaveBeenCalledWith(
-            'git clone http://repo.git .',
+            'git clone --depth 1 http://repo.git .',
             'dest'
         );
     });
 
     it('should update submodules', async () => {
-        await git.updateSubmodules('cwd');
+        await git.updateSubmodules('dest');
         expect(runCommand).toHaveBeenCalledWith(
-            expect.stringContaining('git submodule foreach'),
-            'cwd'
+            'git submodule foreach --recursive "git checkout main && git pull origin main"',
+            'dest'
         );
     });
 
     it('should checkout orphan branch', async () => {
-        await git.checkoutOrphan('branch', 'cwd');
-        expect(runCommand).toHaveBeenCalledWith('git checkout --orphan branch', 'cwd');
+        await git.checkoutOrphan('branch', 'dest');
+        expect(runCommand).toHaveBeenCalledWith('git checkout --orphan branch', 'dest');
     });
 
-    it('should add all files', async () => {
-        await git.addAll('cwd');
-        expect(runCommand).toHaveBeenCalledWith('git add -A', 'cwd');
+    it('should get remote url', async () => {
+        // Mock exec to call the callback with success
+        mocks.exec.mockImplementation((((cmd: string, options: any, callback: any) => {
+            if (typeof options === 'function') {
+                callback = options;
+                options = {};
+            }
+            // callback(error, stdout, stderr)
+            callback(null, 'https://github.com/origin.git\n', '');
+            return {} as any; // exec returns a ChildProcess
+        }) as any));
+
+        const url = await git.getRemoteUrl('cwd');
+        expect(url).toBe('https://github.com/origin.git');
+        expect(mocks.exec).toHaveBeenCalledWith('git remote get-url origin', { cwd: 'cwd' }, expect.any(Function));
     });
 
-    it('should commit', async () => {
-        await git.commit('msg', 'cwd');
-        expect(runCommand).toHaveBeenCalledWith('git commit -m "msg"', 'cwd');
-    });
+    it('should return empty string on getRemoteUrl failure', async () => {
+        // Mock exec to call the callback with error
+        mocks.exec.mockImplementation((((cmd: string, options: any, callback: any) => {
+            if (typeof options === 'function') callback = options;
+            callback(new Error('fail'), '', '');
+            return {} as any;
+        }) as any));
 
-    it('should delete branch', async () => {
-        await git.deleteBranch('branch', 'cwd');
-        expect(runCommand).toHaveBeenCalledWith('git branch -D branch', 'cwd');
-    });
-
-    it('should rename branch', async () => {
-        await git.renameBranch('branch', 'cwd');
-        expect(runCommand).toHaveBeenCalledWith('git branch -m branch', 'cwd');
-    });
-
-    it('should remove remote', async () => {
-        await git.removeRemote('origin', 'cwd');
-        expect(runCommand).toHaveBeenCalledWith('git remote remove origin', 'cwd');
-    });
-
-    it('should check if branch exists', async () => {
-        vi.mocked(runCommand).mockResolvedValueOnce('hash refs/heads/branch');
-        expect(await git.branchExists('branch', 'cwd')).toBe(true);
-
-        vi.mocked(runCommand).mockRejectedValueOnce(new Error('fail'));
-        expect(await git.branchExists('branch', 'cwd')).toBe(false);
+        const url = await git.getRemoteUrl('cwd');
+        expect(url).toBe('');
     });
 });
+
+it('should add all files', async () => {
+    await git.addAll('cwd');
+    expect(runCommand).toHaveBeenCalledWith('git add -A', 'cwd');
+});
+
+it('should commit', async () => {
+    await git.commit('msg', 'cwd');
+    expect(runCommand).toHaveBeenCalledWith('git commit -m "msg"', 'cwd');
+});
+
+it('should delete branch', async () => {
+    await git.deleteBranch('branch', 'cwd');
+    expect(runCommand).toHaveBeenCalledWith('git branch -D branch', 'cwd');
+});
+
+it('should rename branch', async () => {
+    await git.renameBranch('branch', 'cwd');
+    expect(runCommand).toHaveBeenCalledWith('git branch -m branch', 'cwd');
+});
+
+it('should remove remote', async () => {
+    await git.removeRemote('origin', 'cwd');
+    expect(runCommand).toHaveBeenCalledWith('git remote remove origin', 'cwd');
+});
+
+it('should check if branch exists', async () => {
+    vi.mocked(runCommand).mockResolvedValueOnce();
+    expect(await git.branchExists('branch', 'cwd')).toBe(true);
+
+    vi.mocked(runCommand).mockRejectedValueOnce(new Error('fail'));
+    expect(await git.branchExists('branch', 'cwd')).toBe(false);
+});
+

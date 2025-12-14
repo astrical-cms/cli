@@ -159,7 +159,7 @@ describe('RunCommand', () => {
     it('should handle non-zero exit code', async () => {
         setTimeout(() => {
             mockChild.emit('close', 1);
-        }, 10);
+        }, 50);
         await command.run('test', {});
         expect(mockExit).toHaveBeenCalledWith(1);
     });

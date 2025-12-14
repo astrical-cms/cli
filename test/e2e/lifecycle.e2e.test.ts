@@ -62,6 +62,7 @@ if (args[0] === 'build') {
         moduleDir = path.join(testRoot, 'module-repo');
         await createMockRepo(moduleDir, {
             'package.json': JSON.stringify({ name: 'my-module', version: '0.1.0' }),
+            'module.yaml': 'name: my-test-module\nversion: 0.1.0', // Name matches E2E expectation
             'index.ts': 'console.log("module")'
         });
     });

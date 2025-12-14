@@ -1,6 +1,6 @@
 {
     "name": "@astrical/cli",
-    "version": "0.3.1",
+    "version": "0.4.0",
     "type": "module",
     "bin": {
         "astrical": "./dist/index.js"
@@ -16,7 +16,8 @@
         "test:watch": "vitest"
     },
     "dependencies": {
-        "@nexical/cli-core": "^0.1.5"
+        "@nexical/cli-core": "^0.1.5",
+        "yaml": "^2.3.4"
     },
     "devDependencies": {
         "@types/fs-extra": "^11.0.4",

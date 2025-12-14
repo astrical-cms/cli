@@ -45,6 +45,7 @@ describe('Module Commands Integration', () => {
         const modTemp = await createTempDir('module-source-');
         moduleRepo = await createMockRepo(modTemp, {
             'package.json': '{"name": "my-module", "version": "1.0.0", "description": "Awesome module"}',
+            'module.yaml': 'name: my-module\nversion: 1.0.0',
             'index.ts': 'export const hello = "world";'
         });
 

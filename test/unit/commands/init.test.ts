@@ -80,7 +80,7 @@ describe('InitCommand', () => {
         expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining(targetDir), { recursive: true });
 
         // Clone
-        expect(git.clone).toHaveBeenCalledWith('https://default.com/repo', expect.stringContaining(targetDir), true);
+        expect(git.clone).toHaveBeenCalledWith('https://default.com/repo.git', expect.stringContaining(targetDir), { recursive: true });
 
         // Submodules
         expect(git.updateSubmodules).toHaveBeenCalledWith(expect.stringContaining(targetDir));
@@ -118,7 +118,7 @@ describe('InitCommand', () => {
         expect(git.clone).toHaveBeenCalledWith(
             'https://github.com/nexical/astrical-starter.git',
             expect.stringContaining(targetDir),
-            true
+            { recursive: true }
         );
     });
 
@@ -129,7 +129,7 @@ describe('InitCommand', () => {
         await command.run({ directory: 'empty-dir', repo: 'foo' });
 
         expect(fs.mkdirSync).not.toHaveBeenCalled(); // Should assume dir exists
-        expect(git.clone).toHaveBeenCalledWith('foo', expect.stringContaining('empty-dir'), true);
+        expect(git.clone).toHaveBeenCalledWith('foo.git', expect.stringContaining('empty-dir'), { recursive: true });
     });
 
     it('should fail if directory exists and is not empty', async () => {

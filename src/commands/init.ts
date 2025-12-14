@@ -1,5 +1,6 @@
 import { CommandDefinition, BaseCommand, logger, runCommand } from '@nexical/cli-core';
 import * as git from '../utils/git.js';
+import { resolveGitUrl } from '../utils/url-resolver.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -23,13 +24,7 @@ export default class InitCommand extends BaseCommand {
     async run(options: any) {
         const directory = options.directory;
         const targetPath = path.resolve(process.cwd(), directory);
-        let repoUrl = options.repo;
-
-        // Handle gh@ syntax
-        if (repoUrl.startsWith('gh@')) {
-            repoUrl = `https://github.com/${repoUrl.substring(3)}.git`;
-            logger.debug(`Resolved gh@ shorthad to: ${repoUrl}`);
-        }
+        let repoUrl = resolveGitUrl(options.repo);
 
         logger.debug('Init options:', { directory, targetPath, repoUrl });
 
@@ -47,7 +42,7 @@ export default class InitCommand extends BaseCommand {
 
         try {
             this.info('Cloning starter repository...');
-            await git.clone(repoUrl, targetPath, true);
+            await git.clone(repoUrl, targetPath, { recursive: true });
 
             this.info('Updating submodules...');
             await git.updateSubmodules(targetPath);
