@@ -3,7 +3,6 @@ import fs from 'fs-extra';
 import path from 'path';
 
 export default class ModuleListCommand extends BaseCommand {
-    static paths = [['module', 'list']];
     static usage = 'module list';
     static description = 'List installed modules.';
     static requiresProject = true;

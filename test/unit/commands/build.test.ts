@@ -1,9 +1,10 @@
 import { logger, runCommand } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import BuildCommand from '../../../src/commands/build.js';
-import fs from 'fs-extra';
+import { copyEnvironment } from '../../../src/utils/environment.js';
 
 vi.mock('fs-extra');
+vi.mock('../../../src/utils/environment.js');
 
 vi.mock('@nexical/cli-core', async (importOriginal) => {
     const mod = await importOriginal<typeof import('@nexical/cli-core')>();
@@ -32,10 +33,10 @@ describe('BuildCommand', () => {
             (command as any).projectRoot = '/mock/root';
         });
 
-        vi.mocked(fs.pathExists).mockResolvedValue(true as any);
-        vi.spyOn(process, 'exit').mockImplementation((() => { }) as any);
         // Mock runCommand to resolve by default
         vi.mocked(runCommand).mockResolvedValue({ stdout: '', stderr: '', exitCode: 0 } as any);
+        // Mock copyEnvironment to resolve by default
+        vi.mocked(copyEnvironment).mockResolvedValue(undefined);
 
         // Spy on command methods
         vi.spyOn(command, 'error').mockImplementation(() => { });
@@ -64,35 +65,21 @@ describe('BuildCommand', () => {
         expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
-    it('should error if core directory is missing', async () => {
-        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
-            return !p.includes('src/core');
-        });
+    it('should error if copyEnvironment fails', async () => {
+        vi.mocked(copyEnvironment).mockRejectedValue(new Error('Copy failed'));
         await command.run({});
-        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Core directory not found'));
+        expect(command.error).toHaveBeenCalledWith(expect.objectContaining({ message: 'Copy failed' }));
     });
 
-    it('should clean, copy files, and execute astro build', async () => {
+    it('should prepare environment and execute astro build', async () => {
         await command.run({});
 
-        expect(fs.remove).toHaveBeenCalledWith(expect.stringContaining('_site'));
-        expect(fs.ensureDir).toHaveBeenCalledWith(expect.stringContaining('_site'));
-        expect(fs.copy).toHaveBeenCalledTimes(4); // Core, Modules, Content, Public
+        expect(copyEnvironment).toHaveBeenCalledWith('/mock/root');
 
         expect(runCommand).toHaveBeenCalledWith(
             expect.stringContaining('/mock/root/node_modules/.bin/astro build'),
             expect.stringContaining('_site')
         );
-
-        // Verify filter function logic if possible, or skip strictly verifying filter instance identity
-        const copyCalls = vi.mocked(fs.copy).mock.calls;
-        const coreCopyCall = copyCalls.find(call => call[0].toString().includes('core'));
-        expect(coreCopyCall).toBeDefined();
-        if (coreCopyCall && coreCopyCall[2]) {
-            const filterFn = (coreCopyCall[2] as any).filter;
-            expect(filterFn('some/path')).toBe(true);
-            expect(filterFn('some/node_modules/path')).toBe(false);
-        }
 
         expect(command.success).toHaveBeenCalledWith(expect.stringContaining('Build completed'));
     });
@@ -103,17 +90,5 @@ describe('BuildCommand', () => {
         await command.run({});
 
         expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Build failed'), 1);
-    });
-
-    it('should skip copying if path does not exist', async () => {
-        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
-            // Simulate core exists, others don't
-            if (p.includes('core')) return true;
-            return false;
-        });
-
-        await command.run({});
-
-        expect(fs.copy).toHaveBeenCalledTimes(1); // Only core
     });
 });

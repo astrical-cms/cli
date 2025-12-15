@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import DevCommand from '../../../src/commands/dev.js';
 import cp from 'child_process';
 import EventEmitter from 'events';
+import { linkEnvironment } from '../../../src/utils/environment.js';
 
 vi.mock('@nexical/cli-core', async (importOriginal) => {
     const mod = await importOriginal<typeof import('@nexical/cli-core')>();
@@ -14,7 +15,8 @@ vi.mock('@nexical/cli-core', async (importOriginal) => {
 vi.mock('child_process');
 // Mock the dynamic import of environment
 vi.mock('../../../src/utils/environment.js', () => ({
-    prepareEnvironment: vi.fn().mockResolvedValue(undefined)
+    prepareEnvironment: vi.fn().mockResolvedValue(undefined),
+    linkEnvironment: vi.fn().mockResolvedValue(undefined)
 }));
 
 describe('DevCommand', () => {
@@ -28,6 +30,7 @@ describe('DevCommand', () => {
         vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
         vi.spyOn(command, 'info').mockImplementation((() => { }) as any);
         vi.spyOn(command, 'warn').mockImplementation((() => { }) as any);
+        vi.spyOn(command, 'success').mockImplementation((() => { }) as any);
 
         // Mock spawn to return an event emitter
         mockChild = new EventEmitter();
@@ -56,7 +59,7 @@ describe('DevCommand', () => {
     it('should error if project root is missing', async () => {
         command = new DevCommand({}, { rootDir: undefined });
         vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
-        await command.run();
+        await command.run({});
         expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
@@ -66,10 +69,9 @@ describe('DevCommand', () => {
             mockChild.emit('close', 0);
         }, 100);
 
-        await command.run();
+        await command.run({});
 
-        const { prepareEnvironment } = await import('../../../src/utils/environment.js');
-        expect(prepareEnvironment).toHaveBeenCalledWith('/mock/root');
+        expect(linkEnvironment).toHaveBeenCalledWith('/mock/root');
 
         expect(cp.spawn).toHaveBeenCalledWith(
             expect.stringContaining('astro'),
@@ -82,23 +84,18 @@ describe('DevCommand', () => {
     });
 
     it('should handle errors during initialization', async () => {
-        const { prepareEnvironment } = await import('../../../src/utils/environment.js');
-        vi.mocked(prepareEnvironment).mockRejectedValueOnce(new Error('Init failed'));
+        vi.mocked(linkEnvironment).mockRejectedValueOnce(new Error('Init failed'));
 
-        // We need to finish the command execution somehow, or expect it to proceed?
-        // In implementation: catch error, then log error. Then PROCEED to spawn.
-        // So we need to mock close event too.
-        setTimeout(() => {
-            mockChild.emit('close', 0);
-        }, 100);
-
-        await command.run();
+        // Since it returns on error in the implementation:
+        await command.run({});
 
         expect(command.error).toHaveBeenCalledWith(expect.any(Error));
+        // Should NOT spawn
+        expect(cp.spawn).not.toHaveBeenCalled();
     });
 
     it('should handle spawn error', async () => {
-        const runPromise = command.run();
+        const runPromise = command.run({});
         await new Promise(resolve => setTimeout(resolve, 0));
 
         mockChild.emit('error', new Error('Spawn failed'));
@@ -120,7 +117,7 @@ describe('DevCommand', () => {
             mockChild.emit('close', 0);
         }, 50);
 
-        await command.run();
+        await command.run({});
         expect(mockChild.kill).toHaveBeenCalled();
         expect(process.exit).toHaveBeenCalled();
     });

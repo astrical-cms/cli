@@ -2,14 +2,14 @@ import { BaseCommand, logger } from '@nexical/cli-core';
 import path from 'path';
 import { spawn } from 'child_process';
 import process from 'node:process';
+import { linkEnvironment } from '../utils/environment.js';
 
 export default class DevCommand extends BaseCommand {
-    static paths = [['dev']];
     static usage = 'dev';
     static description = 'Starts the Astro development server with HMR.';
     static requiresProject = true;
 
-    async run() {
+    async run(options: any) {
         if (!this.projectRoot) {
             this.error('Project root not found.');
             return;
@@ -20,9 +20,8 @@ export default class DevCommand extends BaseCommand {
         this.info('Initializing ephemeral build environment...');
 
         try {
-            const { prepareEnvironment } = await import('../utils/environment.js');
             logger.debug(`Preparing environment at: ${this.projectRoot}`);
-            await prepareEnvironment(this.projectRoot);
+            await linkEnvironment(this.projectRoot);
         } catch (error: any) {
             this.error(error);
             return;

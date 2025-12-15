@@ -3,7 +3,6 @@ import fs from 'fs-extra';
 import path from 'path';
 
 export default class ModuleRemoveCommand extends BaseCommand {
-    static paths = [['module', 'remove']];
     static usage = 'module remove <name>';
     static description = 'Remove an installed module.';
     static requiresProject = true;

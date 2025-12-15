@@ -1,10 +1,11 @@
 import { CommandDefinition, BaseCommand, logger, runCommand } from '@nexical/cli-core';
 import * as git from '../utils/git.js';
 import { resolveGitUrl } from '../utils/url-resolver.js';
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from 'fs-extra';
+import path from 'path';
 
 export default class InitCommand extends BaseCommand {
+    static usage = 'init';
     static description = 'Initialize a new Astrical project.';
     static args: CommandDefinition = {
         args: [
@@ -31,13 +32,13 @@ export default class InitCommand extends BaseCommand {
         this.info(`Initializing project in: ${targetPath}`);
         this.info(`Using starter repository: ${repoUrl}`);
 
-        if (fs.existsSync(targetPath)) {
-            if (fs.readdirSync(targetPath).length > 0) {
+        if (await fs.pathExists(targetPath)) {
+            if ((await fs.readdir(targetPath)).length > 0) {
                 this.error(`Directory ${directory} is not empty.`);
                 process.exit(1);
             }
         } else {
-            fs.mkdirSync(targetPath, { recursive: true });
+            await fs.mkdir(targetPath, { recursive: true });
         }
 
         try {
@@ -66,6 +67,23 @@ export default class InitCommand extends BaseCommand {
 
             await git.renameBranch('main', targetPath);
             await git.removeRemote('origin', targetPath);
+
+            this.info('Seeding project with Core defaults...');
+            const corePath = path.join(targetPath, 'src', 'core');
+            const corePublicDefault = path.join(corePath, 'public-default');
+            const coreContentDefault = path.join(corePath, 'content-default');
+
+            // Seed Public: content of public-default -> public
+            if (await fs.pathExists(corePublicDefault)) {
+                await fs.ensureDir(path.join(targetPath, 'public'));
+                await fs.copy(corePublicDefault, path.join(targetPath, 'public'), { overwrite: false });
+            }
+
+            // Seed Content: content of content-default -> content (at root)
+            if (await fs.pathExists(coreContentDefault)) {
+                await fs.ensureDir(path.join(targetPath, 'content'));
+                await fs.copy(coreContentDefault, path.join(targetPath, 'content'), { overwrite: false });
+            }
 
             this.success(`Project initialized successfully in ${directory}!`);
 

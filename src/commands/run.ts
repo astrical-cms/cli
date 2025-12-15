@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { spawn } from 'child_process';
 import process from 'node:process';
-import { prepareEnvironment } from '../utils/environment.js';
+import { linkEnvironment } from '../utils/environment.js';
 
 export default class RunCommand extends BaseCommand {
     static paths = [['run']];
@@ -33,7 +33,7 @@ export default class RunCommand extends BaseCommand {
             return;
         }
 
-        await prepareEnvironment(this.projectRoot!);
+        await linkEnvironment(this.projectRoot!);
         const siteDir = path.resolve(this.projectRoot!, '_site');
 
         logger.debug('Run command context:', { script, args: scriptArgs, siteDir });

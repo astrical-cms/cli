@@ -5,12 +5,11 @@ import { spawn } from 'child_process';
 import process from 'node:process';
 
 export default class PreviewCommand extends BaseCommand {
-    static paths = [['preview']];
     static usage = 'preview';
     static description = 'Preview the production build locally.';
     static requiresProject = true;
 
-    async run() {
+    async run(options: any) {
         if (!this.projectRoot) {
             this.error('Project root not found.');
             return;

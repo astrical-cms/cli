@@ -3,7 +3,6 @@ import fs from 'fs-extra';
 import path from 'path';
 
 export default class ModuleUpdateCommand extends BaseCommand {
-    static paths = [['module', 'update']];
     static usage = 'module update [name]';
     static description = 'Update a specific module or all modules.';
     static requiresProject = true;

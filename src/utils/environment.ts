@@ -2,55 +2,87 @@ import { logger } from '@nexical/cli-core';
 import fs from 'fs-extra';
 import path from 'path';
 
-export async function prepareEnvironment(projectRoot: string) {
+export async function linkEnvironment(projectRoot: string) {
     const siteDir = path.resolve(projectRoot, '_site');
     const srcDir = path.resolve(projectRoot, 'src');
     const coreDir = path.resolve(srcDir, 'core');
     const modulesDir = path.resolve(srcDir, 'modules');
-    const contentDir = path.resolve(srcDir, 'content');
+    const contentDir = path.resolve(projectRoot, 'content');
     const publicDir = path.resolve(projectRoot, 'public');
 
     logger.debug('Preparing environment paths:', { siteDir, srcDir });
 
-    // 1. Ensure _site exists
+    // 1. Ensure _site exists (recreate it cleanly to remove old links)
+    await fs.remove(siteDir);
     await fs.ensureDir(siteDir);
 
-    // 2. Symlink Core contents
+    // 2. Symlink Core -> _site
     if (await fs.pathExists(coreDir)) {
-        const coreFiles = await fs.readdir(coreDir);
-        for (const file of coreFiles) {
-            if (file === 'node_modules') continue;
-
-            const srcPath = path.join(coreDir, file);
-            const destPath = path.join(siteDir, file);
-
-            // Overwrite existing
-            await fs.remove(destPath);
-            await fs.ensureSymlink(srcPath, destPath, 'junction');
-        }
+        await fs.ensureSymlink(coreDir, siteDir, 'junction');
     } else {
         throw new Error(`Core directory not found at ${coreDir}`);
     }
 
     // 3. Symlink Modules
-    const siteModulesDir = path.join(siteDir, 'src/modules');
     if (await fs.pathExists(modulesDir)) {
-        await fs.ensureDir(path.join(siteDir, 'src'));
+        const siteModulesDir = path.join(siteDir, 'modules');
         await fs.remove(siteModulesDir);
         await fs.ensureSymlink(modulesDir, siteModulesDir, 'junction');
     }
 
     // 4. Symlink Content
-    const siteContentDir = path.join(siteDir, 'content');
     if (await fs.pathExists(contentDir)) {
+        const siteContentDir = path.join(siteDir, 'content');
         await fs.remove(siteContentDir);
         await fs.ensureSymlink(contentDir, siteContentDir, 'junction');
     }
 
     // 5. Symlink Public
-    const sitePublicDir = path.join(siteDir, 'public');
     if (await fs.pathExists(publicDir)) {
+        const sitePublicDir = path.join(siteDir, 'public');
         await fs.remove(sitePublicDir);
         await fs.ensureSymlink(publicDir, sitePublicDir, 'junction');
+    }
+}
+
+
+export async function copyEnvironment(projectRoot: string) {
+    const siteDir = path.resolve(projectRoot, '_site');
+    const srcDir = path.resolve(projectRoot, 'src');
+    const coreDir = path.resolve(srcDir, 'core');
+    const modulesDir = path.resolve(srcDir, 'modules');
+    const contentDir = path.resolve(projectRoot, 'content');
+    const publicDir = path.resolve(projectRoot, 'public');
+
+    logger.debug('Build paths resolved:', { siteDir, srcDir, coreDir, modulesDir, contentDir, publicDir });
+
+    // 1. Clean _site
+    logger.debug(`Cleaning site directory: ${siteDir}`);
+    await fs.remove(siteDir);
+    await fs.ensureDir(siteDir);
+
+    // 2. Copy Core contents
+    if (await fs.pathExists(coreDir)) {
+        await fs.copy(coreDir, siteDir, {
+            filter: (src) => !src.includes('node_modules') // Avoid node_modules
+        });
+    }
+
+    // 3. Copy Modules
+    if (await fs.pathExists(modulesDir)) {
+        const siteModulesDir = path.join(siteDir, 'modules');
+        await fs.copy(modulesDir, siteModulesDir);
+    }
+
+    // 4. Copy Content (Root)
+    if (await fs.pathExists(contentDir)) {
+        const siteContentDir = path.join(siteDir, 'content');
+        await fs.copy(contentDir, siteContentDir);
+    }
+
+    // 5. Copy Public
+    if (await fs.pathExists(publicDir)) {
+        const sitePublicDir = path.join(siteDir, 'public');
+        await fs.copy(publicDir, sitePublicDir);
     }
 }

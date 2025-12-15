@@ -2,18 +2,7 @@ import { logger, runCommand } from '@nexical/cli-core';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import InitCommand from '../../../src/commands/init.js';
 import * as git from '../../../src/utils/git.js';
-import fs from 'node:fs';
-
-vi.mock('@nexical/cli-core', async (importOriginal) => {
-    const mod = await importOriginal<typeof import('@nexical/cli-core')>();
-    return {
-        ...mod,
-        runCommand: vi.fn(),
-        logger: { code: vi.fn(), debug: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn(), warn: vi.fn() }
-    }
-});
-vi.mock('../../../src/utils/git.js');
-vi.mock('node:fs');
+import fs from 'fs-extra';
 
 vi.mock('@nexical/cli-core', async (importOriginal) => {
     const mod = await importOriginal<typeof import('@nexical/cli-core')>();
@@ -36,7 +25,7 @@ vi.mock('../../../src/utils/git.js', () => ({
     branchExists: vi.fn()
 }));
 
-vi.mock('node:fs');
+vi.mock('fs-extra');
 
 describe('InitCommand', () => {
     let command: InitCommand;
@@ -51,10 +40,13 @@ describe('InitCommand', () => {
         vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
         vi.spyOn(command, 'info').mockImplementation((() => { }) as any);
         vi.spyOn(command, 'success').mockImplementation((() => { }) as any);
+
         // Default fs mocks
-        vi.mocked(fs.existsSync).mockReturnValue(false);
-        vi.mocked(fs.mkdirSync).mockReturnValue(undefined);
-        vi.mocked(fs.readdirSync).mockReturnValue([]);
+        vi.mocked(fs.pathExists as any).mockResolvedValue(false); // Target not exist
+        vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+        vi.mocked(fs.readdir).mockResolvedValue([] as any);
+        vi.mocked(fs.copy).mockResolvedValue(undefined);
+        vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
 
         // Mock process.exit to throw a known error so we can stop execution and verify it
         mockExit = vi.spyOn(process, 'exit').mockImplementation((code) => {
@@ -77,7 +69,7 @@ describe('InitCommand', () => {
         vi.mocked(git.branchExists).mockResolvedValue(true);
         await command.run({ directory: targetDir, repo: 'https://default.com/repo' });
 
-        expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining(targetDir), { recursive: true });
+        expect(fs.mkdir).toHaveBeenCalledWith(expect.stringContaining(targetDir), { recursive: true });
 
         // Clone
         expect(git.clone).toHaveBeenCalledWith('https://default.com/repo.git', expect.stringContaining(targetDir), { recursive: true });
@@ -99,8 +91,6 @@ describe('InitCommand', () => {
         expect(git.commit).toHaveBeenCalledWith('Initial commit', expect.stringContaining(targetDir));
 
         // Wait for potential async calls to finish
-        // We need to re-trigger or rely on the previous run, but here we can just verify
-        // since the run call finished
         expect(git.branchExists).toHaveBeenCalledWith('main', expect.stringContaining(targetDir));
         expect(git.branchExists).toHaveBeenCalledWith('master', expect.stringContaining(targetDir));
 
@@ -108,7 +98,45 @@ describe('InitCommand', () => {
         expect(git.renameBranch).toHaveBeenCalledWith('main', expect.stringContaining(targetDir));
         expect(git.removeRemote).toHaveBeenCalledWith('origin', expect.stringContaining(targetDir));
 
+        // Seeding check: Should check for core being present
+        expect(fs.pathExists).toHaveBeenCalledWith(expect.stringContaining('src/core/public-default'));
+
         expect(command.success).toHaveBeenCalledWith(expect.stringContaining('successfully'));
+    });
+
+    it('should seed project with core defaults', async () => {
+        const targetDir = 'seeded-project';
+        vi.mocked(git.branchExists).mockResolvedValue(true);
+
+        // Simulate core folders existing
+        vi.mocked(fs.pathExists as any).mockImplementation(async (p: string) => {
+            if (p.includes('src/core/public-default')) return true;
+            if (p.includes('src/core/content-default')) return true;
+            return false;
+        });
+
+        await command.run({ directory: targetDir, repo: 'foo' });
+
+        // Public seed
+        expect(fs.copy).toHaveBeenCalledWith(
+            expect.stringContaining('src/core/public-default'),
+            expect.stringContaining('public'),
+            expect.objectContaining({ overwrite: false })
+        );
+
+        // Content seed
+        expect(fs.copy).toHaveBeenCalledWith(
+            expect.stringContaining('src/core/content-default'),
+            expect.stringContaining('content'),
+            expect.objectContaining({ overwrite: false })
+        );
+
+        // Should NOT refer to src/content anymore
+        expect(fs.copy).not.toHaveBeenCalledWith(
+            expect.anything(),
+            expect.stringContaining('src/content'),
+            expect.anything()
+        );
     });
 
     it('should handle gh@ syntax', async () => {
@@ -123,18 +151,19 @@ describe('InitCommand', () => {
     });
 
     it('should proceed if directory exists but is empty', async () => {
-        vi.mocked(fs.existsSync).mockReturnValue(true);
-        vi.mocked(fs.readdirSync).mockReturnValue([]);
+        vi.mocked(fs.pathExists as any).mockResolvedValue(true);
+        vi.mocked(fs.readdir).mockResolvedValue([] as any);
 
         await command.run({ directory: 'empty-dir', repo: 'foo' });
 
-        expect(fs.mkdirSync).not.toHaveBeenCalled(); // Should assume dir exists
+        expect(fs.mkdir).not.toHaveBeenCalled(); // Should assume dir exists
         expect(git.clone).toHaveBeenCalledWith('foo.git', expect.stringContaining('empty-dir'), { recursive: true });
     });
 
     it('should fail if directory exists and is not empty', async () => {
-        vi.mocked(fs.existsSync).mockReturnValue(true);
-        vi.mocked(fs.readdirSync).mockReturnValue(['file.txt'] as any);
+        // First exists check for targetDir
+        vi.mocked(fs.pathExists as any).mockResolvedValue(true);
+        vi.mocked(fs.readdir).mockResolvedValue(['file.txt'] as any);
 
         await expect(command.run({ directory: 'existing-dir', repo: 'foo' }))
             .rejects.toThrow('Process.exit(1)');

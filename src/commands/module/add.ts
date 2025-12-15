@@ -6,7 +6,6 @@ import { resolveGitUrl } from '../../utils/url-resolver.js';
 import YAML from 'yaml';
 
 export default class ModuleAddCommand extends BaseCommand {
-    static paths = [['module', 'add']];
     static usage = 'module add <url>';
     static description = 'Add a module and its dependencies as git submodules.';
     static requiresProject = true;
