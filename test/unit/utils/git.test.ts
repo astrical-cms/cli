@@ -131,10 +131,22 @@ it('should remove remote', async () => {
 });
 
 it('should check if branch exists', async () => {
-    vi.mocked(runCommand).mockResolvedValueOnce();
-    expect(await git.branchExists('branch', 'cwd')).toBe(true);
+    // Mock success
+    mocks.exec.mockImplementation((((cmd: string, options: any, callback: any) => {
+        if (typeof options === 'function') callback = options;
+        callback(null, '', '');
+        return {} as any;
+    }) as any));
 
-    vi.mocked(runCommand).mockRejectedValueOnce(new Error('fail'));
+    expect(await git.branchExists('branch', 'cwd')).toBe(true);
+    expect(mocks.exec).toHaveBeenCalledWith('git show-ref --verify --quiet refs/heads/branch', { cwd: 'cwd' }, expect.any(Function));
+
+    // Mock failure
+    mocks.exec.mockImplementation((((cmd: string, options: any, callback: any) => {
+        if (typeof options === 'function') callback = options;
+        callback(new Error('fail'), '', '');
+        return {} as any;
+    }) as any));
+
     expect(await git.branchExists('branch', 'cwd')).toBe(false);
 });
-

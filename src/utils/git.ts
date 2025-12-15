@@ -53,7 +53,7 @@ export async function removeRemote(remote: string, cwd: string): Promise<void> {
 
 export async function branchExists(branch: string, cwd: string): Promise<boolean> {
     try {
-        await runCommand(`git show-ref --verify --quiet refs/heads/${branch}`, cwd);
+        await execAsync(`git show-ref --verify --quiet refs/heads/${branch}`, { cwd });
         return true;
     } catch {
         return false;
