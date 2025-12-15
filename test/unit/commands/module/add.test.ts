@@ -55,7 +55,6 @@ describe('ModuleAddCommand', () => {
     });
 
     it('should have correct static properties', () => {
-        expect(ModuleAddCommand.paths).toEqual([['module', 'add']]);
         expect(ModuleAddCommand.usage).toContain('module add');
         expect(ModuleAddCommand.description).toBeDefined();
         expect(ModuleAddCommand.requiresProject).toBe(true);

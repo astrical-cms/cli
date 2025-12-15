@@ -14,7 +14,6 @@ export async function linkEnvironment(projectRoot: string) {
 
     // 1. Ensure _site exists (recreate it cleanly to remove old links)
     await fs.remove(siteDir);
-    await fs.ensureDir(siteDir);
 
     // 2. Symlink Core -> _site
     if (await fs.pathExists(coreDir)) {

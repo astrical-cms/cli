@@ -110,14 +110,14 @@ describe('Module Commands Integration', () => {
             // 3. UPDATE MODULE
             const updateCmd = new ModuleUpdateCommand(cli);
             await updateCmd.init();
-            await updateCmd.run('my-module');
+            await updateCmd.run({ name: 'my-module' });
             // Hard to check "update" without changing the remote first.
             // But we verify it ran without throwing.
 
             // 4. REMOVE MODULE
             const removeCmd = new ModuleRemoveCommand(cli);
             await removeCmd.init();
-            await removeCmd.run('my-module');
+            await removeCmd.run({ name: 'my-module' });
 
             expect(fs.existsSync(modulePath)).toBe(false);
 

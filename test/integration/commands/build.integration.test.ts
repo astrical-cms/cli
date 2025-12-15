@@ -27,8 +27,8 @@ describe('BuildCommand Integration', () => {
         await fs.ensureDir(path.join(projectDir, 'src', 'core'));
         await fs.outputFile(path.join(projectDir, 'src', 'core', 'index.astro'), '--- ---');
 
-        await fs.ensureDir(path.join(projectDir, 'src', 'content'));
-        await fs.outputFile(path.join(projectDir, 'src', 'content', 'config.ts'), 'export const collections = {};');
+        await fs.ensureDir(path.join(projectDir, 'content'));
+        await fs.outputFile(path.join(projectDir, 'content', 'config.ts'), 'export const collections = {};');
 
         await fs.ensureDir(path.join(projectDir, 'public'));
         await fs.outputFile(path.join(projectDir, 'public', 'favicon.ico'), 'icon');

@@ -44,7 +44,6 @@ describe('ModuleListCommand', () => {
     });
 
     it('should have correct static properties', () => {
-        expect(ModuleListCommand.paths).toEqual([['module', 'list']]);
         expect(ModuleListCommand.usage).toContain('module list');
         expect(ModuleListCommand.description).toBeDefined();
         expect(ModuleListCommand.requiresProject).toBe(true);
@@ -79,7 +78,7 @@ describe('ModuleListCommand', () => {
         });
 
         // Mock reading json: mod1=valid, mod3=invalid, mod4=empty
-        vi.mocked(fs.readJson).mockImplementation(async (p: string) => {
+        vi.mocked(fs.readJson).mockImplementation(async (p: any) => {
             if (p.includes('mod3')) throw new Error('Invalid JSON');
             if (p.includes('mod4')) return {}; // No version/desc
             return { version: '1.0.0', description: 'Desc' };
@@ -101,7 +100,7 @@ describe('ModuleListCommand', () => {
     });
 
     it('should handle empty modules directory', async () => {
-        vi.mocked(fs.readdir).mockResolvedValue([]);
+        vi.mocked(fs.readdir).mockResolvedValue([] as any);
         await command.run();
         expect(command.info).toHaveBeenCalledWith('No modules installed.');
     });

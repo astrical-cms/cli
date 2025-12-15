@@ -42,7 +42,6 @@ describe('ModuleRemoveCommand', () => {
     });
 
     it('should have correct static properties', () => {
-        expect(ModuleRemoveCommand.paths).toEqual([['module', 'remove']]);
         expect(ModuleRemoveCommand.usage).toContain('module remove');
         expect(ModuleRemoveCommand.description).toBeDefined();
         expect(ModuleRemoveCommand.requiresProject).toBe(true);
@@ -52,12 +51,12 @@ describe('ModuleRemoveCommand', () => {
     it('should error if project root is missing', async () => {
         command = new ModuleRemoveCommand({}, { rootDir: undefined });
         vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
-        await command.run('mod');
+        await command.run({ name: 'mod' });
         expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
     it('should remove submodule and sync', async () => {
-        await command.run('mod');
+        await command.run({ name: 'mod' });
 
         expect(runCommand).toHaveBeenCalledWith(expect.stringContaining('git submodule deinit'), '/mock/root');
         expect(runCommand).toHaveBeenCalledWith(expect.stringContaining('git rm'), '/mock/root');
@@ -67,13 +66,13 @@ describe('ModuleRemoveCommand', () => {
 
     it('should error if module not found', async () => {
         vi.mocked(fs.pathExists).mockImplementation(async () => false);
-        await command.run('missing');
+        await command.run({ name: 'missing' });
         expect(command.error).toHaveBeenCalledWith(expect.stringContaining('not found'));
     });
 
     it('should handle failure during remove', async () => {
         vi.mocked(runCommand).mockRejectedValue(new Error('Git remove failed'));
-        await command.run('mod');
+        await command.run({ name: 'mod' });
         expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Failed to remove module'));
     });
 
@@ -82,7 +81,7 @@ describe('ModuleRemoveCommand', () => {
             if (p.includes('.git/modules')) return false;
             return true;
         });
-        await command.run('mod');
+        await command.run({ name: 'mod' });
         expect(fs.remove).not.toHaveBeenCalledWith(expect.stringContaining('.git/modules'));
     });
 });

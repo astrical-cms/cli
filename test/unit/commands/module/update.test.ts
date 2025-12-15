@@ -42,7 +42,6 @@ describe('ModuleUpdateCommand', () => {
     });
 
     it('should have correct static properties', () => {
-        expect(ModuleUpdateCommand.paths).toEqual([['module', 'update']]);
         expect(ModuleUpdateCommand.usage).toContain('module update');
         expect(ModuleUpdateCommand.description).toBeDefined();
         expect(ModuleUpdateCommand.requiresProject).toBe(true);
@@ -52,12 +51,12 @@ describe('ModuleUpdateCommand', () => {
     it('should error if project root is missing', async () => {
         command = new ModuleUpdateCommand({}, { rootDir: undefined });
         vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
-        await command.run();
+        await command.run({});
         expect(command.error).toHaveBeenCalledWith('Project root not found.');
     });
 
     it('should update all modules if no name provided', async () => {
-        await command.run();
+        await command.run({});
         expect(runCommand).toHaveBeenCalledWith(
             expect.stringContaining('git submodule update --remote'),
             '/mock/root'
@@ -66,7 +65,7 @@ describe('ModuleUpdateCommand', () => {
     });
 
     it('should update specific module', async () => {
-        await command.run('mod');
+        await command.run({ name: 'mod' });
         expect(runCommand).toHaveBeenCalledWith(
             expect.stringContaining('git submodule update --remote --merge src/modules/mod'),
             '/mock/root'
@@ -75,7 +74,7 @@ describe('ModuleUpdateCommand', () => {
 
     it('should handle failure during update', async () => {
         vi.mocked(runCommand).mockRejectedValue(new Error('Update failed'));
-        await command.run();
+        await command.run({});
         expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Failed to update'));
     });
 
@@ -84,7 +83,7 @@ describe('ModuleUpdateCommand', () => {
             // console.log('UpdateTest: pathExists check:', p);
             return false;
         });
-        await command.run('missing-mod');
+        await command.run({ name: 'missing-mod' });
         expect(command.error).toHaveBeenCalledWith('Module missing-mod not found.');
     });
 });

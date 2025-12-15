@@ -16,7 +16,7 @@ vi.mock('@nexical/cli-core', async (importOriginal) => {
 vi.mock('fs-extra');
 vi.mock('child_process');
 vi.mock('../../../src/utils/environment.js', () => ({
-    prepareEnvironment: vi.fn().mockResolvedValue(undefined)
+    linkEnvironment: vi.fn().mockResolvedValue(undefined)
 }));
 
 describe('RunCommand', () => {
@@ -74,8 +74,8 @@ describe('RunCommand', () => {
         // run(script, options)
         await command.run('test', {});
 
-        const { prepareEnvironment } = await import('../../../src/utils/environment.js');
-        expect(prepareEnvironment).toHaveBeenCalled();
+        const { linkEnvironment } = await import('../../../src/utils/environment.js');
+        expect(linkEnvironment).toHaveBeenCalled();
 
         expect(cp.spawn).toHaveBeenCalledWith('npm', ['run', 'test', '--'], expect.objectContaining({
             cwd: expect.stringContaining('_site')
