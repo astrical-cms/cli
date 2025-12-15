@@ -14,7 +14,10 @@ export default class ModuleUpdateCommand extends BaseCommand {
         ]
     };
 
-    async run(name?: string) {
+    async run(options: any) {
+        logger.debug('ModuleUpdate Options:', options);
+        let { name } = options;
+
         if (!this.projectRoot) {
             this.error('Project root not found.');
             return;
