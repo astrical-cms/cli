@@ -40,11 +40,11 @@ describe('RunCommand', () => {
         vi.spyOn(command, 'warn').mockImplementation((() => { }) as any);
 
         // Defaultfs mocks
-        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
+        vi.mocked(fs.pathExists).mockImplementation(async (p: any) => {
             if (p.includes('package.json')) return true;
             return false;
         });
-        vi.mocked(fs.readJson).mockImplementation(async (p: string) => {
+        vi.mocked(fs.readJson).mockImplementation(async (p: any) => {
             return { scripts: { test: 'echo test', sc: 'echo sc' } };
         });
 
@@ -97,10 +97,10 @@ describe('RunCommand', () => {
     });
 
     it('should run module script if resolved', async () => {
-        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
+        vi.mocked(fs.pathExists).mockImplementation(async (p: any) => {
             return p.includes('stripe/package.json') || p.includes('stripe') || p.includes('core');
         });
-        vi.mocked(fs.readJson).mockImplementation(async (p: string) => {
+        vi.mocked(fs.readJson).mockImplementation(async (p: any) => {
             if (p.includes('stripe')) {
                 return { scripts: { sync: 'node scripts/sync.js' } };
             }
@@ -130,10 +130,10 @@ describe('RunCommand', () => {
     });
 
     it('should handle module script read error', async () => {
-        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
+        vi.mocked(fs.pathExists).mockImplementation(async (p: any) => {
             return p.includes('stripe'); // module exists
         });
-        vi.mocked(fs.readJson).mockImplementation(async (p: string) => {
+        vi.mocked(fs.readJson).mockImplementation(async (p: any) => {
             if (p.includes('stripe')) {
                 throw new Error('Read failed');
             }
@@ -150,7 +150,7 @@ describe('RunCommand', () => {
     });
 
     it('should ignore module script if package.json missing', async () => {
-        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
+        vi.mocked(fs.pathExists).mockImplementation(async (p: any) => {
             return p.includes('stripe') && !p.includes('package.json');
         });
 
@@ -197,10 +197,10 @@ describe('RunCommand', () => {
         const originalPlatform = process.platform;
         Object.defineProperty(process, 'platform', { value: 'win32' });
 
-        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
+        vi.mocked(fs.pathExists).mockImplementation(async (p: any) => {
             return p.includes('stripe');
         });
-        vi.mocked(fs.readJson).mockImplementation(async (p: string) => {
+        vi.mocked(fs.readJson).mockImplementation(async (p: any) => {
             if (p.includes('stripe')) {
                 return { scripts: { sync: 'node scripts/sync.js' } };
             }
@@ -217,7 +217,7 @@ describe('RunCommand', () => {
         Object.defineProperty(process, 'platform', { value: originalPlatform });
     });
     it('should fall back to default behavior if script not found in module', async () => {
-        vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
+        vi.mocked(fs.pathExists).mockImplementation(async (p: any) => {
             return p.includes('src/modules/mymod') || p.includes('package.json');
         });
         vi.mocked(fs.readJson).mockResolvedValue({

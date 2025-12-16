@@ -1,14 +1,20 @@
 #!/usr/bin/env node
-import { CLI, logger } from '@nexical/cli-core';
-import path from 'node:path';
+import { CLI, logger, findProjectRoot, setDebugMode } from '@nexical/cli-core';
 import { fileURLToPath } from 'node:url';
+import { discoverCommandDirectories } from './src/utils/discovery.js';
+import path from 'node:path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const commandName = 'astrical';
+const projectRoot = await findProjectRoot(commandName, process.cwd()) || process.cwd();
 
-logger.debug('CLI ENTRY POINT HIT', process.argv);
+const additionalCommands = discoverCommandDirectories(projectRoot);
 
 const app = new CLI({
-    commandName: 'astrical',
-    searchDirectories: [path.resolve(__dirname, './src/commands'),]
+    commandName: commandName,
+    searchDirectories: [
+        path.resolve(__dirname, './src/commands'),
+        ...additionalCommands
+    ]
 });
 app.start();

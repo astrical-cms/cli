@@ -54,7 +54,7 @@ describe('Dev/Preview Integration', () => {
         const command = new DevCommand(cli);
         Object.assign(command, { projectRoot: projectDir });
 
-        await command.run();
+        await command.run({});
 
         expect(spawnMock).toHaveBeenCalledWith(
             expect.stringContaining('node_modules/.bin/astro'),
@@ -70,7 +70,7 @@ describe('Dev/Preview Integration', () => {
         const command = new PreviewCommand(cli);
         Object.assign(command, { projectRoot: projectDir });
 
-        await command.run();
+        await command.run({});
 
         expect(spawnMock).toHaveBeenCalledWith(
             expect.stringContaining('node_modules/.bin/astro'),

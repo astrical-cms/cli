@@ -4,12 +4,15 @@ import DevCommand from '../../../src/commands/dev.js';
 import cp from 'child_process';
 import EventEmitter from 'events';
 import { linkEnvironment } from '../../../src/utils/environment.js';
+import { runCommand } from '@nexical/cli-core';
 
+// Mock runCommand
 vi.mock('@nexical/cli-core', async (importOriginal) => {
     const mod = await importOriginal<typeof import('@nexical/cli-core')>();
     return {
         ...mod,
-        logger: { code: vi.fn(), debug: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn(), warn: vi.fn() }
+        logger: { code: vi.fn(), debug: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn(), warn: vi.fn() },
+        runCommand: vi.fn().mockResolvedValue(undefined)
     }
 });
 vi.mock('child_process');
@@ -102,6 +105,19 @@ describe('DevCommand', () => {
 
         await runPromise;
         expect(command.error).toHaveBeenCalledWith(expect.stringContaining('Failed to start Astro'));
+    });
+
+    it('should handle build failure', async () => {
+        // baseCommand.error exits process, so we simulate that by throwing
+        vi.spyOn(command, 'error').mockImplementation(() => { throw new Error('EXIT'); });
+        const error = new Error('Build failed');
+        // Mock runCommand to throw
+        vi.mocked(runCommand).mockRejectedValueOnce(error);
+
+        await expect(command.run({})).rejects.toThrow('EXIT');
+        expect(command.error).toHaveBeenCalledWith('Build failed: Build failed', 1);
+        // Should not spawn
+        expect(cp.spawn).not.toHaveBeenCalled();
     });
 
     it('should handle cleanup signals', async () => {
