@@ -7,6 +7,15 @@ import { execa } from 'execa';
 const CLI_ENTRY = path.resolve(__dirname, '../../index.ts');
 const TEST_TMP_DIR = path.resolve(__dirname, '../../.test-tmp/command-loading');
 
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const tsxPackagePath = require.resolve('tsx/package.json');
+const tsxDir = path.dirname(tsxPackagePath);
+const TSX_BIN = path.resolve(tsxDir, 'dist/cli.mjs');
+
+console.log('Using TSX binary at:', TSX_BIN);
+
 describe('Command Loading Integration', () => {
     beforeAll(async () => {
         await fs.ensureDir(TEST_TMP_DIR);
@@ -51,9 +60,7 @@ describe('Command Loading Integration', () => {
 
         await fs.writeFile(path.join(moduleDir, 'hello.js'), jsCommandContent);
 
-        const TSX_BIN = path.resolve(__dirname, '../../../../node_modules/.bin/tsx');
-
-        const { stdout, stderr } = await execa(TSX_BIN, [CLI_ENTRY, 'hello', '--debug'], {
+        const { stdout, stderr } = await execa('node', [TSX_BIN, CLI_ENTRY, 'hello', '--debug'], {
             cwd: TEST_TMP_DIR,
             reject: false,
             env: {
