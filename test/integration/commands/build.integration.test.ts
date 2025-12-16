@@ -74,7 +74,7 @@ describe('BuildCommand Integration', () => {
         // 2. Verify exec called with local binary
         // BuildCommand uses runCommand -> exec
         expect(execMock).toHaveBeenCalledWith(
-            expect.stringContaining('node_modules/.bin/astro build'),
+            expect.stringContaining('npm run build'),
             expect.objectContaining({
                 cwd: expect.stringContaining('_site')
             }),

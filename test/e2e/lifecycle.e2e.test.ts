@@ -49,13 +49,24 @@ if (args[0] === 'build') {
                 dependencies: {
                     // Use file: protocol to point to local mock
                     'astro': `file:${mockAstroDir}`
+                },
+                scripts: {
+                    'build': 'astro build',
+                    'dev': 'astro dev',
+                    'preview': 'astro preview'
                 }
             }),
             'README.md': '# E2E Starter',
             'astrical.yml': 'name: e2e-test\nversion: 0.0.1', // ESSENTIAL for CLI to recognize project
             'src/pages/index.astro': '--- ---',
             'src/core/index.ts': '// core',
-            'src/core/package.json': '{}'
+            'src/core/package.json': JSON.stringify({
+                scripts: {
+                    'build': 'astro build',
+                    'dev': 'astro dev',
+                    'preview': 'astro preview'
+                }
+            })
         });
 
         // 3. Setup Mock Module Repo

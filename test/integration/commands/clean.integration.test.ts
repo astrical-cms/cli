@@ -11,8 +11,8 @@ describe('CleanCommand Integration', () => {
     beforeEach(async () => {
         tempDir = await createTempDir('clean-integration-');
         // Setup initial state
-        await fs.ensureDir(path.join(tempDir, 'dist'));
-        await fs.outputFile(path.join(tempDir, 'dist', 'index.js'), 'console.log("hi")');
+        await fs.ensureDir(path.join(tempDir, '_site'));
+        await fs.outputFile(path.join(tempDir, '_site', 'index.html'), '<html></html>');
         await fs.ensureDir(path.join(tempDir, 'node_modules'));
         await fs.outputFile(path.join(tempDir, 'node_modules', 'pkg.json'), '{}');
     });
@@ -21,27 +21,18 @@ describe('CleanCommand Integration', () => {
         if (tempDir) await fs.remove(tempDir);
     });
 
-    it('should remove dist and node_modules directories', async () => {
+    it('should remove _site and node_modules directories', async () => {
         const cli = new CLI({ commandName: 'astrical' });
         const command = new CleanCommand(cli);
-        // CleanCommand usually runs in process.cwd(), so we need to mock that or pass directory if supported.
-        // Checking clean.ts implementation... it uses process.cwd().
-        // We can spy spy process.cwd() or similar.
-
-        // Wait, does CleanCommand accept a directory argument? 
-        // Let's check implementation. If not, we have to change process.cwd.
 
         const originalCwd = process.cwd();
         try {
             process.chdir(tempDir);
 
-            await command.run();
+            await command.run({});
 
-            expect(fs.existsSync(path.join(tempDir, 'dist'))).toBe(false);
-            // clean command removes node_modules/.vite, not the whole node_modules
-            expect(fs.existsSync(path.join(tempDir, 'node_modules', '.vite'))).toBe(false);
-            expect(fs.existsSync(path.join(tempDir, 'node_modules'))).toBe(true);
-
+            expect(fs.existsSync(path.join(tempDir, '_site'))).toBe(false);
+            expect(fs.existsSync(path.join(tempDir, 'node_modules'))).toBe(false);
         } finally {
             process.chdir(originalCwd);
         }

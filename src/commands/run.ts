@@ -38,7 +38,7 @@ export default class RunCommand extends BaseCommand {
 
         // Initialize command to default npm run
         const finalCmd = 'npm';
-        const finalArgs = ['run', script, '--', ...scriptArgs];
+        let finalArgs = null;
         let execPath = null;
 
         // Check for module:script syntax
@@ -64,6 +64,7 @@ export default class RunCommand extends BaseCommand {
                 this.error(`Failed to find package.json for module ${moduleName}`);
                 return;
             }
+            finalArgs = ['run', scriptName, '--', ...scriptArgs];
             execPath = modulePath;
 
         } else {
@@ -73,6 +74,7 @@ export default class RunCommand extends BaseCommand {
                 this.error(`Script ${script} does not exist in Astrical core`);
                 return;
             }
+            finalArgs = ['run', script, '--', ...scriptArgs];
             execPath = siteDir;
         }
 

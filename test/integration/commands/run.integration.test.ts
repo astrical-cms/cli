@@ -22,12 +22,23 @@ describe('RunCommand Integration', () => {
 
         // Setup minimal env
         await fs.ensureDir(path.join(projectDir, 'src', 'core'));
-
-        // Setup a module with a script
+        await fs.outputFile(path.join(projectDir, 'src', 'core', 'package.json'), JSON.stringify({
+            name: 'astrical-core',
+            scripts: {
+                'test-script': 'echo test'
+            }
+        }));
         await fs.ensureDir(path.join(projectDir, 'src', 'modules', 'my-auth'));
         await fs.outputFile(path.join(projectDir, 'src', 'modules', 'my-auth', 'package.json'), JSON.stringify({
             scripts: {
                 'seed': 'node seed.js'
+            }
+        }));
+
+        await fs.ensureDir(path.join(projectDir, '_site'));
+        await fs.outputFile(path.join(projectDir, '_site', 'package.json'), JSON.stringify({
+            scripts: {
+                'test-script': 'echo test'
             }
         }));
 
@@ -55,7 +66,7 @@ describe('RunCommand Integration', () => {
         const command = new RunCommand(cli);
         Object.assign(command, { projectRoot: projectDir });
 
-        await command.run('test-script', '--flag', {}); // Add options object
+        await command.run({ script: 'test-script', args: ['--flag'] });
 
         expect(spawnMock).toHaveBeenCalledWith(
             'npm',
@@ -71,18 +82,15 @@ describe('RunCommand Integration', () => {
         const command = new RunCommand(cli);
         Object.assign(command, { projectRoot: projectDir });
 
-        await command.run('my-auth:seed', '--force', {}); // Add options object
+        await command.run({ script: 'my-auth:seed', args: ['--force'] });
 
-        // Module scripts run using sh -c or cmd /c
-        const expectedCmd = process.platform === 'win32' ? 'cmd' : 'sh';
-        const expectedArgs = process.platform === 'win32'
-            ? ['/c', 'node seed.js --force']
-            : ['-c', 'node seed.js --force'];
-
+        // Module scripts run via npm run scriptName inside module dir
         expect(spawnMock).toHaveBeenCalledWith(
-            expectedCmd,
-            expectedArgs,
-            expect.anything()
+            'npm',
+            ['run', 'seed', '--', '--force'],
+            expect.objectContaining({
+                cwd: expect.stringContaining(path.join('modules', 'my-auth'))
+            })
         );
     });
 });

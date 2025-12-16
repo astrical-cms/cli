@@ -76,7 +76,7 @@ describe('BuildCommand', () => {
         expect(copyEnvironment).toHaveBeenCalledWith('/mock/root');
 
         expect(runCommand).toHaveBeenCalledWith(
-            expect.stringContaining('/mock/root/node_modules/.bin/astro build'),
+            'npm run build',
             expect.stringContaining('_site')
         );
 

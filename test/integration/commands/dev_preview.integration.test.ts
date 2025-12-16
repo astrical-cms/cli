@@ -5,7 +5,7 @@ import PreviewCommand from '../../../src/commands/preview.js';
 import { createTempDir } from '../../utils/integration-helpers.js';
 import path from 'node:path';
 import fs from 'fs-extra';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import EventEmitter from 'events';
 
 vi.mock('child_process', () => ({
@@ -32,6 +32,12 @@ describe('Dev/Preview Integration', () => {
             setTimeout(() => child.emit('close', 0), 10);
             return child;
         });
+
+        vi.mocked(exec).mockImplementation(((cmd: string, options: any, cb: any) => {
+            const callback = cb || options;
+            callback(null, { stdout: '', stderr: '' });
+            return {} as any;
+        }) as any);
     });
 
     afterEach(() => {
