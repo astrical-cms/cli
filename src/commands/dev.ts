@@ -1,4 +1,4 @@
-import { BaseCommand, logger } from '@nexical/cli-core';
+import { BaseCommand, logger, runCommand } from '@nexical/cli-core';
 import path from 'path';
 import { spawn } from 'child_process';
 import process from 'node:process';
@@ -25,6 +25,14 @@ export default class DevCommand extends BaseCommand {
         } catch (error: any) {
             this.error(error);
             return;
+        }
+
+        this.success('Environment linked. Starting build process...');
+        try {
+            await runCommand(`npm run build`, siteDir);
+            this.success('Build completed successfully.');
+        } catch (e: any) {
+            this.error(`Build failed: ${e.message}`, 1);
         }
 
         this.success('Environment ready. Starting Astro...');

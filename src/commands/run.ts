@@ -6,27 +6,25 @@ import process from 'node:process';
 import { linkEnvironment } from '../utils/environment.js';
 
 export default class RunCommand extends BaseCommand {
-    static paths = [['run']];
     static usage = 'run <script> [args...]';
     static description = 'Run a script inside the Astrical environment.';
     static requiresProject = true;
 
     static args = {
         args: [
-            { name: 'script', required: true, description: 'The script to run' },
+            { name: 'script', required: true, description: 'The script to run (script-name OR module:script-name)' },
             { name: 'args...', required: false, description: 'Arguments for the script' }
         ]
     };
 
-    async run(script: string, ...args: any[]) {
+    async run(options: any) {
         if (!this.projectRoot) {
             this.error('Project root not found.');
             return;
         }
 
-        // args will contain variadic args and THEN the options object as the last element.
-        const options = args.pop();
-        const scriptArgs = args; // The rest are the [args...]
+        const script = options.script;
+        const scriptArgs = options.args;
 
         if (!script) {
             this.error('Please specify a script to run.');
@@ -39,47 +37,49 @@ export default class RunCommand extends BaseCommand {
         logger.debug('Run command context:', { script, args: scriptArgs, siteDir });
 
         // Initialize command to default npm run
-        let finalCmd = 'npm';
-        let finalArgs = ['run', script, '--', ...scriptArgs];
+        const finalCmd = 'npm';
+        const finalArgs = ['run', script, '--', ...scriptArgs];
+        let execPath = null;
 
         // Check for module:script syntax
         if (script.includes(':')) {
             const [moduleName, scriptName] = script.split(':');
-            const modulePath = path.resolve(this.projectRoot!, 'src', 'modules', moduleName);
+            const modulePath = path.resolve(siteDir, 'modules', moduleName);
             logger.debug(`Resolving module script: ${moduleName}:${scriptName} at ${modulePath}`);
 
-            // Check if module exists
+            // Check if script exists
             const modulePkgJsonPath = path.join(modulePath, 'package.json');
             if (await fs.pathExists(modulePkgJsonPath)) {
                 try {
                     const pkg = await fs.readJson(modulePkgJsonPath);
-                    if (pkg.scripts && pkg.scripts[scriptName]) {
-                        // Found the module script
-                        const rawCommand = pkg.scripts[scriptName];
-                        this.info(`Running module script: ${moduleName}:${scriptName}`);
-
-                        // Execute raw command using shell
-                        finalCmd = 'sh';
-                        finalArgs = ['-c', `${rawCommand} ${scriptArgs.join(' ')}`];
-
-                        if (process.platform === 'win32') {
-                            finalCmd = 'cmd';
-                            finalArgs = ['/c', `${rawCommand} ${scriptArgs.join(' ')}`];
-                        }
-                    } else {
-                        // Script not found in module, confusing usage?
+                    if (!pkg.scripts || !pkg.scripts[scriptName]) {
+                        this.error(`Script ${scriptName} does not exist in module ${moduleName}`);
+                        return;
                     }
                 } catch (e: any) {
                     this.error(`Failed to read package.json for module ${moduleName}: ${e.message}`);
                     return;
                 }
+            } else {
+                this.error(`Failed to find package.json for module ${moduleName}`);
+                return;
             }
+            execPath = modulePath;
+
+        } else {
+            const corePkgJsonPath = path.join(siteDir, 'package.json');
+            const pkg = await fs.readJson(corePkgJsonPath);
+            if (!pkg.scripts || !pkg.scripts[script]) {
+                this.error(`Script ${script} does not exist in Astrical core`);
+                return;
+            }
+            execPath = siteDir;
         }
 
         logger.debug(`Executing final command: ${finalCmd} ${finalArgs.join(' ')} `);
 
         const child = spawn(finalCmd, finalArgs, {
-            cwd: siteDir,
+            cwd: execPath,
             stdio: 'inherit',
             env: {
                 ...process.env,

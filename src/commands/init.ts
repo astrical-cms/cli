@@ -54,8 +54,6 @@ export default class InitCommand extends BaseCommand {
             this.info('Re-initializing git history...');
             // Orphan branch strategy to wipe history but keep files
             await git.checkoutOrphan('new-main', targetPath);
-            await git.addAll(targetPath);
-            await git.commit('Initial commit', targetPath);
 
             // Delete old main/master (check if they exist first to avoid errors)
             if (await git.branchExists('main', targetPath)) {
@@ -73,6 +71,9 @@ export default class InitCommand extends BaseCommand {
             const corePublicDefault = path.join(corePath, 'public-default');
             const coreContentDefault = path.join(corePath, 'content-default');
 
+            // Ensure module directory
+            await fs.ensureDir(path.join(targetPath, 'src', 'modules'));
+
             // Seed Public: content of public-default -> public
             if (await fs.pathExists(corePublicDefault)) {
                 await fs.ensureDir(path.join(targetPath, 'public'));
@@ -84,6 +85,9 @@ export default class InitCommand extends BaseCommand {
                 await fs.ensureDir(path.join(targetPath, 'content'));
                 await fs.copy(coreContentDefault, path.join(targetPath, 'content'), { overwrite: false });
             }
+
+            await git.addAll(targetPath);
+            await git.commit('Initial commit', targetPath);
 
             this.success(`Project initialized successfully in ${directory}!`);
 

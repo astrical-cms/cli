@@ -63,25 +63,28 @@ export async function copyEnvironment(projectRoot: string) {
     // 2. Copy Core contents
     if (await fs.pathExists(coreDir)) {
         await fs.copy(coreDir, siteDir, {
-            filter: (src) => !src.includes('node_modules') // Avoid node_modules
+            filter: (src) => !src.includes('node_modules')
         });
     }
 
     // 3. Copy Modules
     if (await fs.pathExists(modulesDir)) {
         const siteModulesDir = path.join(siteDir, 'modules');
+        await fs.remove(siteModulesDir);
         await fs.copy(modulesDir, siteModulesDir);
     }
 
     // 4. Copy Content (Root)
     if (await fs.pathExists(contentDir)) {
         const siteContentDir = path.join(siteDir, 'content');
+        await fs.remove(siteContentDir);
         await fs.copy(contentDir, siteContentDir);
     }
 
     // 5. Copy Public
     if (await fs.pathExists(publicDir)) {
         const sitePublicDir = path.join(siteDir, 'public');
+        await fs.remove(sitePublicDir);
         await fs.copy(publicDir, sitePublicDir);
     }
 }

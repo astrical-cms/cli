@@ -3,16 +3,21 @@ import fs from 'fs-extra';
 import path from 'path';
 
 export default class CleanCommand extends BaseCommand {
-    static paths = [['clean']];
     static usage = 'clean';
     static description = 'Clean project artifacts and caches.';
 
-    async run() {
+    async run(options: any) {
+        const coreDir = path.join('src', 'core');
+
         // Core cleaning logic
         const targets = [
-            '_site',
-            'dist',
-            path.join('node_modules', '.vite')
+            path.join(coreDir, 'modules'),
+            path.join(coreDir, 'content'),
+            path.join(coreDir, 'public'),
+            path.join(coreDir, 'node_modules'),
+            path.join(coreDir, 'dist'),
+            'node_modules',
+            '_site'
         ];
 
         for (const target of targets) {

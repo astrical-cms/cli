@@ -29,7 +29,7 @@ export default class BuildCommand extends BaseCommand {
         logger.debug(`Using astro binary at: ${astroBin}`);
 
         try {
-            await runCommand(`${astroBin} build`, siteDir);
+            await runCommand(`npm run build`, siteDir);
 
             this.success('Build completed successfully.');
             this.success(`Output generated at ${path.join(siteDir, 'dist')}`);
