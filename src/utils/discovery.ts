@@ -33,7 +33,7 @@ export function discoverCommandDirectories(projectRoot: string): string[] {
     // Search in projectRoot
     const possibleCorePaths = [
         path.join(projectRoot, 'src/commands'),
-        path.join(projectRoot, 'src/core/commands'),
+        path.join(projectRoot, 'src/core/src/commands'),
     ];
 
     possibleCorePaths.forEach(addDir);
@@ -48,7 +48,7 @@ export function discoverCommandDirectories(projectRoot: string): string[] {
                 if (mod.startsWith('.')) continue;
 
                 const modPath = path.join(modulesDir, mod);
-                const modCommands = path.join(modPath, 'commands');
+                const modCommands = path.join(modPath, 'src/commands');
 
                 if (fs.existsSync(modPath) && fs.statSync(modPath).isDirectory()) {
                     addDir(modCommands);
