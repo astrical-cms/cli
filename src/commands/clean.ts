@@ -12,6 +12,7 @@ export default class CleanCommand extends BaseCommand {
         // Core cleaning logic
         const targets = [
             path.join(coreDir, 'modules'),
+            path.join(coreDir, 'src', 'themes'),
             path.join(coreDir, 'content'),
             path.join(coreDir, 'public'),
             path.join(coreDir, 'node_modules'),

@@ -7,6 +7,7 @@ export async function linkEnvironment(projectRoot: string) {
     const srcDir = path.resolve(projectRoot, 'src');
     const coreDir = path.resolve(srcDir, 'core');
     const modulesDir = path.resolve(srcDir, 'modules');
+    const themesDir = path.resolve(projectRoot, 'themes');
     const contentDir = path.resolve(projectRoot, 'content');
     const publicDir = path.resolve(projectRoot, 'public');
 
@@ -29,14 +30,21 @@ export async function linkEnvironment(projectRoot: string) {
         await fs.ensureSymlink(modulesDir, siteModulesDir, 'junction');
     }
 
-    // 4. Symlink Content
+    // 4. Symlink Themes
+    if (await fs.pathExists(themesDir)) {
+        const siteThemesDir = path.join(siteDir, 'src/themes');
+        await fs.remove(siteThemesDir);
+        await fs.ensureSymlink(themesDir, siteThemesDir, 'junction');
+    }
+
+    // 5. Symlink Content
     if (await fs.pathExists(contentDir)) {
         const siteContentDir = path.join(siteDir, 'content');
         await fs.remove(siteContentDir);
         await fs.ensureSymlink(contentDir, siteContentDir, 'junction');
     }
 
-    // 5. Symlink Public
+    // 6. Symlink Public
     if (await fs.pathExists(publicDir)) {
         const sitePublicDir = path.join(siteDir, 'public');
         await fs.remove(sitePublicDir);
@@ -50,6 +58,7 @@ export async function copyEnvironment(projectRoot: string) {
     const srcDir = path.resolve(projectRoot, 'src');
     const coreDir = path.resolve(srcDir, 'core');
     const modulesDir = path.resolve(srcDir, 'modules');
+    const themesDir = path.resolve(projectRoot, 'themes');
     const contentDir = path.resolve(projectRoot, 'content');
     const publicDir = path.resolve(projectRoot, 'public');
 
@@ -74,14 +83,21 @@ export async function copyEnvironment(projectRoot: string) {
         await fs.copy(modulesDir, siteModulesDir);
     }
 
-    // 4. Copy Content (Root)
+    // 4. Copy Themes
+    if (await fs.pathExists(themesDir)) {
+        const siteThemesDir = path.join(siteDir, 'src/themes');
+        await fs.remove(siteThemesDir);
+        await fs.copy(themesDir, siteThemesDir);
+    }
+
+    // 5. Copy Content (Root)
     if (await fs.pathExists(contentDir)) {
         const siteContentDir = path.join(siteDir, 'content');
         await fs.remove(siteContentDir);
         await fs.copy(contentDir, siteContentDir);
     }
 
-    // 5. Copy Public
+    // 6. Copy Public
     if (await fs.pathExists(publicDir)) {
         const sitePublicDir = path.join(siteDir, 'public');
         await fs.remove(sitePublicDir);

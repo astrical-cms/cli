@@ -68,13 +68,20 @@ export default class InitCommand extends BaseCommand {
 
             this.info('Seeding project with Core defaults...');
             const corePath = path.join(targetPath, 'src', 'core');
+            const coreThemesDefault = path.join(corePath, 'src', 'themes-default');
             const corePublicDefault = path.join(corePath, 'public-default');
             const coreContentDefault = path.join(corePath, 'content-default');
 
             // Ensure module directory
             await fs.ensureDir(path.join(targetPath, 'src', 'modules'));
 
-            // Seed Public: content of public-default -> public
+            // Seed Public: content of src/themes-default -> themes (at root)
+            if (await fs.pathExists(coreThemesDefault)) {
+                await fs.ensureDir(path.join(targetPath, 'themes'));
+                await fs.copy(coreThemesDefault, path.join(targetPath, 'themes'), { overwrite: false });
+            }
+
+            // Seed Public: content of public-default -> public (at root)
             if (await fs.pathExists(corePublicDefault)) {
                 await fs.ensureDir(path.join(targetPath, 'public'));
                 await fs.copy(corePublicDefault, path.join(targetPath, 'public'), { overwrite: false });
