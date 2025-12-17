@@ -32,6 +32,7 @@ export function discoverCommandDirectories(projectRoot: string): string[] {
     // 1. Core commands
     // Search in projectRoot
     const possibleCorePaths = [
+        path.join(projectRoot, 'src/commands'),
         path.join(projectRoot, 'src/core/commands'),
     ];
 
