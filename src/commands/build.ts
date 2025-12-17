@@ -13,7 +13,7 @@ export default class BuildCommand extends BaseCommand {
             return;
         }
 
-        const siteDir = path.resolve(this.projectRoot, '_site');
+        const siteDir = path.resolve(this.projectRoot, 'site');
 
         try {
             logger.debug(`Preparing environment at: ${this.projectRoot}`);

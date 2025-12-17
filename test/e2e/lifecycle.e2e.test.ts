@@ -152,7 +152,7 @@ if (args[0] === 'build') {
         const cleanResult = await runCLI(['clean'], projectDir, { env });
 
         expect(cleanResult.exitCode).toBe(0);
-        expect(fs.existsSync(path.join(projectDir, '_site'))).toBe(false);
+        expect(fs.existsSync(path.join(projectDir, 'site'))).toBe(false);
 
     }, 120000); // Long timeout for full chain
 });

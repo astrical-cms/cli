@@ -35,8 +35,8 @@ describe('RunCommand Integration', () => {
             }
         }));
 
-        await fs.ensureDir(path.join(projectDir, '_site'));
-        await fs.outputFile(path.join(projectDir, '_site', 'package.json'), JSON.stringify({
+        await fs.ensureDir(path.join(projectDir, 'site'));
+        await fs.outputFile(path.join(projectDir, 'site', 'package.json'), JSON.stringify({
             scripts: {
                 'test-script': 'echo test'
             }
@@ -72,7 +72,7 @@ describe('RunCommand Integration', () => {
             'npm',
             ['run', 'test-script', '--', '--flag'],
             expect.objectContaining({
-                cwd: expect.stringContaining('_site')
+                cwd: expect.stringContaining('site')
             })
         );
     });

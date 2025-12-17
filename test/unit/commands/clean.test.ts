@@ -40,21 +40,21 @@ describe('CleanCommand', () => {
     it('should remove targets if they exist', async () => {
         // Mock targets existing
         vi.mocked(fs.pathExists).mockImplementation(async (p: string) => {
-            return p.includes('_site') || p.includes('dist');
+            return p.includes('site') || p.includes('dist');
         });
 
-        await command.run();
+        await command.run({});
 
-        expect(fs.remove).toHaveBeenCalledWith(expect.stringContaining('_site'));
+        expect(fs.remove).toHaveBeenCalledWith(expect.stringContaining('site'));
         expect(fs.remove).toHaveBeenCalledWith(expect.stringContaining('dist'));
         // node_modules/.vite shouldn't be removed if not returning true for pathExists
-        // But our mock logic returns true for _site and dist only? 
+        // But our mock logic returns true for site and dist only? 
         // Let's refine mock to be cleaner
     });
 
     it('should log success', async () => {
         const spy = vi.spyOn(command, 'success').mockImplementation(() => { });
-        await command.run();
+        await command.run({});
         expect(spy).toHaveBeenCalledWith(expect.stringContaining('cleaned'));
     });
 });

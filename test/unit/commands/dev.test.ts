@@ -79,7 +79,7 @@ describe('DevCommand', () => {
             expect.stringContaining('astro'),
             ['dev'],
             expect.objectContaining({
-                cwd: expect.stringContaining('_site'),
+                cwd: expect.stringContaining('site'),
                 stdio: 'inherit'
             })
         );

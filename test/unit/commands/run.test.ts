@@ -92,7 +92,7 @@ describe('RunCommand', () => {
         // It is mocked at line 18: vi.mock(..., () => ({ linkEnvironment: vi.fn().mockResolvedValue(undefined) }))
 
         expect(cp.spawn).toHaveBeenCalledWith('npm', ['run', 'test', '--'], expect.objectContaining({
-            cwd: expect.stringContaining('_site')
+            cwd: expect.stringContaining('site')
         }));
     });
 

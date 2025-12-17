@@ -67,7 +67,7 @@ describe('PreviewCommand', () => {
             expect.stringContaining('astro'),
             ['preview'],
             expect.objectContaining({
-                cwd: expect.stringContaining('_site')
+                cwd: expect.stringContaining('site')
             })
         );
     });

@@ -64,8 +64,8 @@ describe('BuildCommand Integration', () => {
 
         await command.run({});
 
-        // 1. Verify _site assembly
-        const siteDir = path.join(projectDir, '_site');
+        // 1. Verify site assembly
+        const siteDir = path.join(projectDir, 'site');
         expect(fs.existsSync(siteDir)).toBe(true);
         expect(fs.existsSync(path.join(siteDir, 'index.astro'))).toBe(true);
         expect(fs.existsSync(path.join(siteDir, 'content', 'config.ts'))).toBe(true);
@@ -76,7 +76,7 @@ describe('BuildCommand Integration', () => {
         expect(execMock).toHaveBeenCalledWith(
             expect.stringContaining('npm run build'),
             expect.objectContaining({
-                cwd: expect.stringContaining('_site')
+                cwd: expect.stringContaining('site')
             }),
             expect.anything()
         );

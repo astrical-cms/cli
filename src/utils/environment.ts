@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 
 export async function linkEnvironment(projectRoot: string) {
-    const siteDir = path.resolve(projectRoot, '_site');
+    const siteDir = path.resolve(projectRoot, 'site');
     const srcDir = path.resolve(projectRoot, 'src');
     const coreDir = path.resolve(srcDir, 'core');
     const modulesDir = path.resolve(srcDir, 'modules');
@@ -13,10 +13,10 @@ export async function linkEnvironment(projectRoot: string) {
 
     logger.debug('Preparing environment paths:', { siteDir, srcDir });
 
-    // 1. Ensure _site exists (recreate it cleanly to remove old links)
+    // 1. Ensure site exists (recreate it cleanly to remove old links)
     await fs.remove(siteDir);
 
-    // 2. Symlink Core -> _site
+    // 2. Symlink Core -> site
     if (await fs.pathExists(coreDir)) {
         await fs.ensureSymlink(coreDir, siteDir, 'junction');
     } else {
@@ -54,7 +54,7 @@ export async function linkEnvironment(projectRoot: string) {
 
 
 export async function copyEnvironment(projectRoot: string) {
-    const siteDir = path.resolve(projectRoot, '_site');
+    const siteDir = path.resolve(projectRoot, 'site');
     const srcDir = path.resolve(projectRoot, 'src');
     const coreDir = path.resolve(srcDir, 'core');
     const modulesDir = path.resolve(srcDir, 'modules');
@@ -64,7 +64,7 @@ export async function copyEnvironment(projectRoot: string) {
 
     logger.debug('Build paths resolved:', { siteDir, srcDir, coreDir, modulesDir, contentDir, publicDir });
 
-    // 1. Clean _site
+    // 1. Clean site
     logger.debug(`Cleaning site directory: ${siteDir}`);
     await fs.remove(siteDir);
     await fs.ensureDir(siteDir);

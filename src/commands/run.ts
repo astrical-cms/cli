@@ -32,7 +32,7 @@ export default class RunCommand extends BaseCommand {
         }
 
         await linkEnvironment(this.projectRoot!);
-        const siteDir = path.resolve(this.projectRoot!, '_site');
+        const siteDir = path.resolve(this.projectRoot!, 'site');
 
         logger.debug('Run command context:', { script, args: scriptArgs, siteDir });
 

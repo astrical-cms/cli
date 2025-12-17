@@ -15,7 +15,7 @@ export default class DevCommand extends BaseCommand {
             return;
         }
 
-        const siteDir = path.resolve(this.projectRoot, '_site');
+        const siteDir = path.resolve(this.projectRoot, 'site');
 
         this.info('Initializing ephemeral build environment...');
 

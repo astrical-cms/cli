@@ -77,7 +77,7 @@ describe('BuildCommand', () => {
 
         expect(runCommand).toHaveBeenCalledWith(
             'npm run build',
-            expect.stringContaining('_site')
+            expect.stringContaining('site')
         );
 
         expect(command.success).toHaveBeenCalledWith(expect.stringContaining('Build completed'));

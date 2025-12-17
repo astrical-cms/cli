@@ -21,8 +21,8 @@ describe('Dev/Preview Integration', () => {
         projectDir = await createTempDir('dev-preview-');
         vi.mocked(spawn).mockClear();
         await fs.ensureDir(path.join(projectDir, 'src', 'core'));
-        // Preview command checks for _site/dist
-        await fs.ensureDir(path.join(projectDir, '_site', 'dist'));
+        // Preview command checks for site/dist
+        await fs.ensureDir(path.join(projectDir, 'site', 'dist'));
 
         spawnMock = vi.mocked(spawn).mockImplementation(() => {
             const child: any = new EventEmitter();
@@ -60,7 +60,7 @@ describe('Dev/Preview Integration', () => {
             expect.stringContaining('node_modules/.bin/astro'),
             ['dev'],
             expect.objectContaining({
-                cwd: expect.stringContaining('_site')
+                cwd: expect.stringContaining('site')
             })
         );
     });
@@ -76,7 +76,7 @@ describe('Dev/Preview Integration', () => {
             expect.stringContaining('node_modules/.bin/astro'),
             ['preview'],
             expect.objectContaining({
-                cwd: expect.stringContaining('_site')
+                cwd: expect.stringContaining('site')
             })
         );
     });

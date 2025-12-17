@@ -11,8 +11,8 @@ describe('CleanCommand Integration', () => {
     beforeEach(async () => {
         tempDir = await createTempDir('clean-integration-');
         // Setup initial state
-        await fs.ensureDir(path.join(tempDir, '_site'));
-        await fs.outputFile(path.join(tempDir, '_site', 'index.html'), '<html></html>');
+        await fs.ensureDir(path.join(tempDir, 'site'));
+        await fs.outputFile(path.join(tempDir, 'site', 'index.html'), '<html></html>');
         await fs.ensureDir(path.join(tempDir, 'node_modules'));
         await fs.outputFile(path.join(tempDir, 'node_modules', 'pkg.json'), '{}');
     });
@@ -21,7 +21,7 @@ describe('CleanCommand Integration', () => {
         if (tempDir) await fs.remove(tempDir);
     });
 
-    it('should remove _site and node_modules directories', async () => {
+    it('should remove site and node_modules directories', async () => {
         const cli = new CLI({ commandName: 'astrical' });
         const command = new CleanCommand(cli);
 
@@ -31,7 +31,7 @@ describe('CleanCommand Integration', () => {
 
             await command.run({});
 
-            expect(fs.existsSync(path.join(tempDir, '_site'))).toBe(false);
+            expect(fs.existsSync(path.join(tempDir, 'site'))).toBe(false);
             expect(fs.existsSync(path.join(tempDir, 'node_modules'))).toBe(false);
         } finally {
             process.chdir(originalCwd);

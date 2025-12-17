@@ -18,7 +18,7 @@ export default class CleanCommand extends BaseCommand {
             path.join(coreDir, 'node_modules'),
             path.join(coreDir, 'dist'),
             'node_modules',
-            '_site'
+            'site'
         ];
 
         for (const target of targets) {

@@ -38,7 +38,7 @@ describe('Environment Utils', () => {
             await expect(linkEnvironment(projectRoot)).rejects.toThrow('Core directory not found');
         });
 
-        it('should link core to _site', async () => {
+        it('should link core to site', async () => {
             vi.mocked(fs.pathExists).mockImplementation(async (p) => {
                 if (p.includes('src/core')) return true;
                 return false;
@@ -46,10 +46,10 @@ describe('Environment Utils', () => {
 
             await linkEnvironment(projectRoot);
 
-            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, '_site'));
+            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, 'site'));
             expect(fs.ensureSymlink).toHaveBeenCalledWith(
                 path.resolve(projectRoot, 'src/core'),
-                path.resolve(projectRoot, '_site'),
+                path.resolve(projectRoot, 'site'),
                 'junction'
             );
         });
@@ -60,33 +60,33 @@ describe('Environment Utils', () => {
             await linkEnvironment(projectRoot);
 
             // site/modules
-            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, '_site/modules'));
+            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, 'site/modules'));
             expect(fs.ensureSymlink).toHaveBeenCalledWith(
                 path.resolve(projectRoot, 'src/modules'),
-                path.resolve(projectRoot, '_site/modules'),
+                path.resolve(projectRoot, 'site/modules'),
                 'junction'
             );
 
             // site/content
-            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, '_site/content'));
+            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, 'site/content'));
             expect(fs.ensureSymlink).toHaveBeenCalledWith(
                 path.resolve(projectRoot, 'content'),
-                path.resolve(projectRoot, '_site/content'),
+                path.resolve(projectRoot, 'site/content'),
                 'junction'
             );
 
             // site/public
-            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, '_site/public'));
+            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, 'site/public'));
             expect(fs.ensureSymlink).toHaveBeenCalledWith(
                 path.resolve(projectRoot, 'public'),
-                path.resolve(projectRoot, '_site/public'),
+                path.resolve(projectRoot, 'site/public'),
                 'junction'
             );
         });
     });
 
     describe('copyEnvironment', () => {
-        it('should copy core to _site', async () => {
+        it('should copy core to site', async () => {
             vi.mocked(fs.pathExists).mockImplementation(async (p) => {
                 if (p.includes('src/core')) return true;
                 return false;
@@ -94,11 +94,11 @@ describe('Environment Utils', () => {
 
             await copyEnvironment(projectRoot);
 
-            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, '_site'));
-            expect(fs.ensureDir).toHaveBeenCalledWith(path.resolve(projectRoot, '_site'));
+            expect(fs.remove).toHaveBeenCalledWith(path.resolve(projectRoot, 'site'));
+            expect(fs.ensureDir).toHaveBeenCalledWith(path.resolve(projectRoot, 'site'));
             expect(fs.copy).toHaveBeenCalledWith(
                 path.resolve(projectRoot, 'src/core'),
-                path.resolve(projectRoot, '_site'),
+                path.resolve(projectRoot, 'site'),
                 expect.objectContaining({ filter: expect.any(Function) })
             );
         });
@@ -110,15 +110,15 @@ describe('Environment Utils', () => {
 
             expect(fs.copy).toHaveBeenCalledWith(
                 path.resolve(projectRoot, 'src/modules'),
-                path.resolve(projectRoot, '_site/modules')
+                path.resolve(projectRoot, 'site/modules')
             );
             expect(fs.copy).toHaveBeenCalledWith(
                 path.resolve(projectRoot, 'content'),
-                path.resolve(projectRoot, '_site/content')
+                path.resolve(projectRoot, 'site/content')
             );
             expect(fs.copy).toHaveBeenCalledWith(
                 path.resolve(projectRoot, 'public'),
-                path.resolve(projectRoot, '_site/public')
+                path.resolve(projectRoot, 'site/public')
             );
         });
 

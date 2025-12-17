@@ -124,7 +124,7 @@ npx astrical init <directory> [options]
 
 #### `dev`
 
-Starts the development server in ephemeral mode. It constructs a temporary build environment in `_site` and runs the Astro dev server with Hot Module Replacement (HMR).
+Starts the development server in ephemeral mode. It constructs a temporary build environment in `site` and runs the Astro dev server with Hot Module Replacement (HMR).
 
 **Usage:**
 ```bash
@@ -132,7 +132,7 @@ npx astrical dev
 ```
 
 **What it does:**
-1.  **Prepares** the `_site` directory by mounting `src/core`, `src/modules`, and content.
+1.  **Prepares** the `site` directory by mounting `src/core`, `src/modules`, and content.
 2.  **Starts** the Astro development server (accessible at `http://localhost:4321` by default).
 3.  **Watches** for changes in your project and updates the ephemeral build automatically.
 
@@ -140,7 +140,7 @@ npx astrical dev
 
 #### `build`
 
-Compiles the project for production. It assembles the final site structure in `_site` and generates static assets.
+Compiles the project for production. It assembles the final site structure in `site` and generates static assets.
 
 **Usage:**
 ```bash
@@ -148,12 +148,12 @@ npx astrical build
 ```
 
 **What it does:**
-1.  **Cleans** the `_site` directory to ensure a fresh build.
-2.  **Copies** all necessary source files (`src/core`, `src/modules`, `src/content`, `public`) into `_site`.
-3.  **Runs** `astro build` to generate the production output in `_site/dist`.
+1.  **Cleans** the `site` directory to ensure a fresh build.
+2.  **Copies** all necessary source files (`src/core`, `src/modules`, `src/content`, `public`) into `site`.
+3.  **Runs** `astro build` to generate the production output in `site/dist`.
 
 **Output:**
-- A production-ready static site in `_site/dist`.
+- A production-ready static site in `site/dist`.
 
 ---
 
@@ -170,7 +170,7 @@ npx astrical preview
 - You must run `astrical build` first.
 
 **What it does:**
-- Starts a local web server serving the static files from `_site/dist`.
+- Starts a local web server serving the static files from `site/dist`.
 
 ---
 
@@ -184,7 +184,7 @@ npx astrical clean
 ```
 
 **What it does:**
-- Deletes `_site`, `dist`, and `node_modules/.vite`.
+- Deletes `site`, `dist`, and `node_modules/.vite`.
 
 ---
 

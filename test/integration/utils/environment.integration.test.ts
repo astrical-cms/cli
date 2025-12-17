@@ -30,7 +30,7 @@ describe('Environment Integration', () => {
         await linkEnvironment(projectRoot);
 
         // Verify
-        const resultDir = path.join(projectRoot, '_site/public');
+        const resultDir = path.join(projectRoot, 'site/public');
         expect(await fs.pathExists(resultDir)).toBe(true);
 
         // Should be symlink to Starter public dir
@@ -53,7 +53,7 @@ describe('Environment Integration', () => {
         await linkEnvironment(projectRoot);
 
         // Verify
-        const resultItem = path.join(projectRoot, '_site/content');
+        const resultItem = path.join(projectRoot, 'site/content');
         expect(await fs.pathExists(resultItem)).toBe(true);
 
         // Should be symlink to Starter content dir
@@ -76,7 +76,7 @@ describe('Environment Integration', () => {
         await linkEnvironment(projectRoot);
 
         // Verify
-        const resultItem = path.join(projectRoot, '_site/modules');
+        const resultItem = path.join(projectRoot, 'site/modules');
         expect(await fs.pathExists(resultItem)).toBe(true);
 
         // Should be symlink to Starter modules dir

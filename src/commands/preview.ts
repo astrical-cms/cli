@@ -15,7 +15,7 @@ export default class PreviewCommand extends BaseCommand {
             return;
         }
 
-        const siteDir = path.resolve(this.projectRoot, '_site');
+        const siteDir = path.resolve(this.projectRoot, 'site');
         const distDir = path.join(siteDir, 'dist');
 
         logger.debug('Preview paths:', { siteDir, distDir });
