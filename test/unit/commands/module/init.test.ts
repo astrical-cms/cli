@@ -147,4 +147,23 @@ describe('ModuleInitCommand Unit', () => {
         expect(fs.writeFile).not.toHaveBeenCalled();
         expect(logger.debug).not.toHaveBeenCalledWith(expect.stringContaining('Updated'));
     });
+
+    it('should skip cleanup if target directory does not exist after failure', async () => {
+        // Mock early failure in ensureDir to trigger catch block
+        vi.mocked(fs.ensureDir).mockRejectedValue(new Error('Setup failed'));
+        // Mock target dir validation passing (initially does not exist)
+        // Then inside catch block, it checks existence again
+        // We want it to be false so it SKIPS fs.remove
+        // We use mockResolvedValueOnce chaining if needed, but here pathExists is called:
+        // 1. Validation (line 37): needs to be false (or true but empty, but let's say false for new module)
+        // 2. Cleanup check (line 76): needs to be false
+        vi.mocked(fs.pathExists).mockResolvedValue(false as never);
+
+        const errorSpy = vi.spyOn(command, 'error').mockImplementation(() => { });
+
+        await expect(command.run({ module_name: 'test-module' })).rejects.toThrow('process.exit');
+
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to initialize module'));
+        expect(fs.remove).not.toHaveBeenCalled();
+    });
 });
