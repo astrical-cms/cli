@@ -88,7 +88,8 @@ describe('discoverCommandDirectories', () => {
         const dirs = discoverCommandDirectories(cwd);
         // Should not crash
         // Since existsSync returns true, core commands ARE found.
-        expect(dirs).toHaveLength(1);
+        expect(dirs).toHaveLength(2);
+        expect(dirs).toContain(path.resolve('/app/src/commands'));
         expect(dirs).toContain(path.resolve('/app/src/core/commands'));
     });
 
