@@ -4,7 +4,7 @@ import path from 'node:path';
 import fs from 'fs-extra';
 import { execa } from 'execa';
 
-const CLI_ENTRY = path.resolve(__dirname, '../../index.ts');
+const CLI_ENTRY = path.resolve(__dirname, '../../../index.ts');
 const TEST_TMP_DIR = path.resolve(__dirname, '../../.test-tmp/command-loading');
 
 import { createRequire } from 'module';
@@ -30,7 +30,7 @@ describe('Command Loading Integration', () => {
         await fs.writeFile(path.join(TEST_TMP_DIR, 'astrical.yaml'), 'name: test-project');
 
         // Setup module structure
-        const moduleDir = path.join(TEST_TMP_DIR, 'src/modules/test-mod/commands');
+        const moduleDir = path.join(TEST_TMP_DIR, 'src/modules/test-mod/src/commands');
         await fs.ensureDir(moduleDir);
 
         const commandFile = path.join(moduleDir, 'hello.ts');

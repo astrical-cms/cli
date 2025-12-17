@@ -53,18 +53,18 @@ describe('discoverCommandDirectories', () => {
 
     it('should find core commands in project directory', () => {
         vi.mocked(fs.existsSync).mockImplementation((p: any) => {
-            return p === path.resolve('/app/src/core/commands');
+            return p === path.resolve('/app/src/core/src/commands');
         });
 
         const dirs = discoverCommandDirectories(cwd);
-        expect(dirs).toContain(path.resolve('/app/src/core/commands'));
+        expect(dirs).toContain(path.resolve('/app/src/core/src/commands'));
     });
 
     it('should scan modules for commands', () => {
         vi.mocked(fs.existsSync).mockImplementation((p: any) => {
             if (p === path.resolve('/app/src/modules')) return true;
             if (p === path.resolve('/app/src/modules/mod1')) return true;
-            if (p === path.resolve('/app/src/modules/mod1/commands')) return true;
+            if (p === path.resolve('/app/src/modules/mod1/src/commands')) return true;
             if (p === path.resolve('/app/src/modules/mod2')) return true;
             return false;
         });
@@ -74,8 +74,8 @@ describe('discoverCommandDirectories', () => {
 
         const dirs = discoverCommandDirectories(cwd);
 
-        expect(dirs).toContain(path.resolve('/app/src/modules/mod1/commands'));
-        expect(dirs).not.toContain(path.resolve('/app/src/modules/mod2/commands'));
+        expect(dirs).toContain(path.resolve('/app/src/modules/mod1/src/commands'));
+        expect(dirs).not.toContain(path.resolve('/app/src/modules/mod2/src/commands'));
         expect(dirs).not.toContain(path.resolve('/app/src/modules/.hidden/commands'));
     });
 
@@ -90,14 +90,14 @@ describe('discoverCommandDirectories', () => {
         // Since existsSync returns true, core commands ARE found.
         expect(dirs).toHaveLength(2);
         expect(dirs).toContain(path.resolve('/app/src/commands'));
-        expect(dirs).toContain(path.resolve('/app/src/core/commands'));
+        expect(dirs).toContain(path.resolve('/app/src/core/src/commands'));
     });
 
     it('should ignore duplicate paths', () => {
         // We force standard core commands and a module command to resolve to same path
-        const corePath = originalResolve('/app/src/core/commands');
+        const corePath = originalResolve('/app/src/core/src/commands');
         // Define a module path that we will map to core path
-        const moduleCmdPath = originalResolve('/app/src/modules/mod1/commands');
+        const moduleCmdPath = originalResolve('/app/src/modules/mod1/src/commands');
 
         // Mock resolve to redirect moduleCmdPath to corePath
         vi.mocked(path.resolve).mockImplementation((...args) => {
@@ -165,7 +165,7 @@ describe('discoverCommandDirectories', () => {
 
         const dirs = discoverCommandDirectories(cwd);
         // Should process mod1, ignore file.txt
-        expect(dirs).toContain(path.resolve('/app/src/modules/mod1/commands'));
-        expect(dirs).not.toContain(path.resolve('/app/src/modules/file.txt/commands'));
+        expect(dirs).toContain(path.resolve('/app/src/modules/mod1/src/commands'));
+        expect(dirs).not.toContain(path.resolve('/app/src/modules/file.txt/src/commands'));
     });
 });
