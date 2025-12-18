@@ -16,7 +16,7 @@
         "test:watch": "vitest"
     },
     "dependencies": {
-        "@nexical/cli-core": "^0.1.8",
+        "@nexical/cli-core": "^0.1.10",
         "yaml": "^2.3.4",
         "fast-glob": "^3.3.3"
     },

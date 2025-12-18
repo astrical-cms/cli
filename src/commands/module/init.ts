@@ -24,20 +24,15 @@ export default class ModuleInitCommand extends BaseCommand {
     };
 
     async run(options: any) {
+        const projectRoot = this.projectRoot as string;
         const { module_name, repo } = options;
 
-        if (!this.projectRoot) {
-            this.error('Project root not found. Please run this command inside an Astrical project.');
-            return;
-        }
-
-        const modulesDir = path.join(this.projectRoot, 'src', 'modules');
+        const modulesDir = path.join(projectRoot, 'src', 'modules');
         const targetDir = path.join(modulesDir, module_name);
 
         if (await fs.pathExists(targetDir)) {
             if ((await fs.readdir(targetDir)).length > 0) {
                 this.error(`Directory ${targetDir} is not empty.`);
-                process.exit(1);
             }
         }
 
@@ -77,7 +72,6 @@ export default class ModuleInitCommand extends BaseCommand {
                 // Cleanup partial directory
                 await fs.remove(targetDir);
             }
-            process.exit(1);
         }
     }
 

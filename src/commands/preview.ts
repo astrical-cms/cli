@@ -10,12 +10,8 @@ export default class PreviewCommand extends BaseCommand {
     static requiresProject = true;
 
     async run(options: any) {
-        if (!this.projectRoot) {
-            this.error('Project root not found.');
-            return;
-        }
-
-        const siteDir = path.resolve(this.projectRoot, 'site');
+        const projectRoot = this.projectRoot as string;
+        const siteDir = path.resolve(projectRoot, 'site');
         const distDir = path.join(siteDir, 'dist');
 
         logger.debug('Preview paths:', { siteDir, distDir });
@@ -27,7 +23,7 @@ export default class PreviewCommand extends BaseCommand {
 
         this.info('Starting preview server...');
 
-        const astroBin = path.join(this.projectRoot, 'node_modules', '.bin', 'astro');
+        const astroBin = path.join(projectRoot, 'node_modules', '.bin', 'astro');
         logger.debug(`Spawning astro preview from: ${astroBin} in ${siteDir}`);
 
         const child = spawn(astroBin, ['preview'], {

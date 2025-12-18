@@ -52,6 +52,7 @@ describe('Command Loading Integration', () => {
             export default class HelloCommand {
                 constructor(cli) { this.cli = cli; }
                 async init() {}
+                async runInit(options) { return this.run(options); }
                 async run() { console.log('Hello from test module!'); }
             }
             HelloCommand.description = 'Test hello command';

@@ -14,21 +14,16 @@ export default class ModuleUpdateCommand extends BaseCommand {
     };
 
     async run(options: any) {
-        logger.debug('ModuleUpdate Options:', options);
+        const projectRoot = this.projectRoot as string;
         let { name } = options;
 
-        if (!this.projectRoot) {
-            this.error('Project root not found.');
-            return;
-        }
-
         this.info(name ? `Updating module ${name}...` : 'Updating all modules...');
-        logger.debug('Update context:', { name, projectRoot: this.projectRoot });
+        logger.debug('Update context:', { name, projectRoot: projectRoot });
 
         try {
             if (name) {
                 const relativePath = `src/modules/${name}`;
-                const fullPath = path.resolve(this.projectRoot, relativePath);
+                const fullPath = path.resolve(projectRoot, relativePath);
 
                 if (!(await fs.pathExists(fullPath))) {
                     this.error(`Module ${name} not found.`);
@@ -38,14 +33,14 @@ export default class ModuleUpdateCommand extends BaseCommand {
                 // Update specific module
                 // We enter the directory and pull? Or generic submodule update?
                 // Generic submodule update --remote src/modules/name
-                await runCommand(`git submodule update --remote --merge ${relativePath}`, this.projectRoot);
+                await runCommand(`git submodule update --remote --merge ${relativePath}`, projectRoot);
             } else {
                 // Update all
-                await runCommand('git submodule update --remote --merge', this.projectRoot);
+                await runCommand('git submodule update --remote --merge', projectRoot);
             }
 
             this.info('Syncing workspace dependencies...');
-            await runCommand('npm install', this.projectRoot);
+            await runCommand('npm install', projectRoot);
 
             this.success('Modules updated successfully.');
         } catch (e: any) {

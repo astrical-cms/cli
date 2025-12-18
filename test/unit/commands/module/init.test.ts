@@ -44,11 +44,12 @@ describe('ModuleInitCommand Unit', () => {
 
     it('should fail if projectRoot is not set', async () => {
         (command as any).projectRoot = null;
+        vi.spyOn(command, 'init').mockResolvedValue(undefined);
         const errorSpy = vi.spyOn(command, 'error').mockImplementation(() => { });
 
-        await command.run({ module_name: 'test-module' });
+        await command.runInit({ module_name: 'test-module' });
 
-        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Project root not found'));
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('requires to be run within an app project'), 1);
     });
 
     it('should fail if directory exists and is not empty', async () => {
@@ -57,7 +58,7 @@ describe('ModuleInitCommand Unit', () => {
         vi.mocked(fs.readdir).mockResolvedValue(['some-file'] as never);
         const errorSpy = vi.spyOn(command, 'error').mockImplementation(() => { });
 
-        await expect(command.run({ module_name: 'test-module' })).rejects.toThrow('process.exit');
+        await command.run({ module_name: 'test-module' });
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('is not empty'));
     });
 
@@ -72,7 +73,7 @@ describe('ModuleInitCommand Unit', () => {
         const errorSpy = vi.spyOn(command, 'error').mockImplementation(() => { });
 
         // Add repo option to avoid validation error if any, though we mocked resolveGitUrl
-        await expect(command.run({ module_name: 'test-module', repo: 'gh@test/repo' })).rejects.toThrow('process.exit');
+        await command.run({ module_name: 'test-module', repo: 'gh@test/repo' });
 
 
         // Note: logger.info and fs.remove assertions are commented out due to mock referencing issues
@@ -161,7 +162,7 @@ describe('ModuleInitCommand Unit', () => {
 
         const errorSpy = vi.spyOn(command, 'error').mockImplementation(() => { });
 
-        await expect(command.run({ module_name: 'test-module' })).rejects.toThrow('process.exit');
+        await command.run({ module_name: 'test-module' });
 
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to initialize module'));
         expect(fs.remove).not.toHaveBeenCalled();

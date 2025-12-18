@@ -74,12 +74,7 @@ describe('Module Commands Integration', () => {
 
             // 1. ADD MODULE
             const addCmd = new ModuleAddCommand(cli);
-            // By default BaseCommand uses process.cwd() as projectRoot if not passed via options or search.
-            // But ModuleAddCommand relies on `this.projectRoot` which is set in `init()`.
-            // Integration: we need to mimic the CLI boot or manually trigger init.
 
-            // BaseCommand.init() calls findProjectRoot().
-            // So we must call init() or manual setup.
             await addCmd.init();
             await addCmd.run({ url: moduleRepo, name: 'my-module' });
 

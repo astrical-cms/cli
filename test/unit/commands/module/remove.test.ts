@@ -50,9 +50,11 @@ describe('ModuleRemoveCommand', () => {
 
     it('should error if project root is missing', async () => {
         command = new ModuleRemoveCommand({}, { rootDir: undefined });
+        vi.spyOn(command, 'init').mockImplementation(async () => { });
         vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
-        await command.run({ name: 'mod' });
-        expect(command.error).toHaveBeenCalledWith('Project root not found.');
+
+        await command.runInit({ name: 'mod' });
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('requires to be run within an app project'), 1);
     });
 
     it('should remove submodule and sync', async () => {

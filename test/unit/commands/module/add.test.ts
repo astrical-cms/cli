@@ -64,8 +64,13 @@ describe('ModuleAddCommand', () => {
     it('should error if project root is missing', async () => {
         command = new ModuleAddCommand({}, { rootDir: undefined });
         vi.spyOn(command, 'error').mockImplementation(() => { });
-        await command.run({ url: 'arg' });
-        expect(command.error).toHaveBeenCalledWith('Project root not found.');
+        // Ensure init doesn't set it (mocked in beforeEach but this constructor overrides logic?)
+        // In beforeEach, we call command.init() then set projectRoot. 
+        // Here we just created new command.
+        vi.spyOn(command, 'init').mockImplementation(async () => { });
+
+        await command.runInit({ url: 'arg' });
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('requires to be run within an app project'), 1);
     });
 
     it('should handle gh@ syntax with .git suffix', async () => {

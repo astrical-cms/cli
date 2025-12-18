@@ -18,11 +18,7 @@ export default class RunCommand extends BaseCommand {
     };
 
     async run(options: any) {
-        if (!this.projectRoot) {
-            this.error('Project root not found.');
-            return;
-        }
-
+        const projectRoot = this.projectRoot as string;
         const script = options.script;
         const scriptArgs = options.args;
 
@@ -31,8 +27,8 @@ export default class RunCommand extends BaseCommand {
             return;
         }
 
-        await linkEnvironment(this.projectRoot!);
-        const siteDir = path.resolve(this.projectRoot!, 'site');
+        await linkEnvironment(projectRoot!);
+        const siteDir = path.resolve(projectRoot!, 'site');
 
         logger.debug('Run command context:', { script, args: scriptArgs, siteDir });
 

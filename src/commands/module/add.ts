@@ -19,13 +19,8 @@ export default class ModuleAddCommand extends BaseCommand {
     private visited = new Set<string>();
 
     async run(options: any) {
-        logger.debug('ModuleAdd Options:', options);
+        const projectRoot = this.projectRoot as string;
         let { url } = options;
-
-        if (!this.projectRoot) {
-            this.error('Project root not found.');
-            return;
-        }
 
         if (!url) {
             this.error('Please specify a repository URL.');
@@ -36,7 +31,7 @@ export default class ModuleAddCommand extends BaseCommand {
             await this.installModule(url);
 
             this.info('Syncing workspace dependencies...');
-            await runCommand('npm install', this.projectRoot);
+            await runCommand('npm install', projectRoot);
 
             this.success('All modules installed successfully.');
         } catch (e: any) {
@@ -45,34 +40,10 @@ export default class ModuleAddCommand extends BaseCommand {
     }
 
     private async installModule(url: string) {
+        const projectRoot = this.projectRoot as string;
+
         // Resolve URL using utility
         url = resolveGitUrl(url);
-
-        // Subdirectory support: url.git//path/to/module
-        // We need to handle this carefully. GIT SUBMODULES don't support partial checkout easily.
-        // User requirements said: "Support the URL.git//path/to/module syntax. If detected, the 'Clone to Temp' step should perform a sparse checkout or copy only the specified subdirectory to the staging area."
-        // BUT we are now using `git submodule add` for the final step.
-        // `git submodule add` will add the WHOLE repo.
-        // If the user wants a subdirectory, we might have a problem with 'git submodule add'.
-        // However, the module system seems to rely on the folder structure.
-        // If we strictly follow "Identity is Internal", we inspect module.yaml.
-        // If the user provided a subdir, we find module.yaml THERE.
-        // But `git submodule add` expects a repo URL.
-        // We can't do sparse submodule add easily.
-        // I will assume for Phase 1 that if a subdir is given, we warn or we add the whole repo but maybe name it differently?
-        // Actually, let's look at the instruction: "Support the URL.git//path/to/module syntax... copy only the specified subdirectory to the staging area... Final Placement: Move the validated temporary folder to modules/[Canonical Name]."
-        // WAIT. The PLAN was updated to use `git submodule add`.
-        // If we use `git submodule add`, we cannot invoke "copy only subdirectory".
-        // This is a conflict in requirements vs plan change.
-        // Plan update said: "Inspect-then-Submodule".
-        // If I detect a subdir, I can't `submodule add` just the subdir.
-        // I will implement standard behavior: `submodule add` the specific repo.
-        // If `//` is present, I'll extract the module name from THAT subdir's yaml during inspection,
-        // BUT I have to submodule add the ROOT repo.
-        // This effectively installs the whole repo.
-        // To strictly support "only the subdirectory", I would have to use the original "Clone & Move" strategy (no submodule).
-        // Since the user explicitly asked for "git submodule add" in the update, I must prioritize that.
-        // I will `submodule add` the ROOT repo. I will read module.yaml from the subdir to get the name.
 
         const [repoUrl, subPath] = url.split('.git//');
         const cleanUrl = subPath ? repoUrl + '.git' : url;
@@ -86,7 +57,7 @@ export default class ModuleAddCommand extends BaseCommand {
         this.info(`Inspecting ${cleanUrl}...`);
 
         // Stage 1: Inspect (Temp Clone)
-        const stagingDir = path.resolve(this.projectRoot!, '.astrical', 'cache', `staging-${Date.now()}-${Math.random().toString(36).substring(7)}`);
+        const stagingDir = path.resolve(projectRoot!, '.astrical', 'cache', `staging-${Date.now()}-${Math.random().toString(36).substring(7)}`);
         let moduleName = '';
         let dependencies: string[] = [];
 
@@ -119,10 +90,6 @@ export default class ModuleAddCommand extends BaseCommand {
 
             // Normalize dependencies to array if object (though spec says list of strings, defensiveness is good)
             if (dependencies && !Array.isArray(dependencies)) {
-                // If it's an object/map, keys might be URLs? Spec: "map of String keys (Git URLs...)"
-                // "Input Schema: Expect... dependencies property to be a map of String keys... with the value being the Git reference"
-                // Example: dependencies: ["https://..."]. Wait, spec says "map of String keys" then example is ARRAY `["..."]`.
-                // I will handle both Array and Object keys.
                 dependencies = Object.keys(dependencies);
             }
 
@@ -134,8 +101,8 @@ export default class ModuleAddCommand extends BaseCommand {
         }
 
         // Stage 2: Conflict Detection
-        const targetDir = path.join(this.projectRoot!, 'src', 'modules', moduleName);
-        const relativeTargetDir = path.relative(this.projectRoot!, targetDir);
+        const targetDir = path.join(projectRoot!, 'src', 'modules', moduleName);
+        const relativeTargetDir = path.relative(projectRoot!, targetDir);
 
         if (await fs.pathExists(targetDir)) {
             // Check origin
@@ -159,7 +126,7 @@ export default class ModuleAddCommand extends BaseCommand {
             // But the CONTENT will be the whole repo.
             // If the user meant to only have the subdir, we can't do that with submodule add easily without manual git plumbing.
             // Given instructions, I will proceed with submodule add of root repo to target dir.
-            await runCommand(`git submodule add ${cleanUrl} ${relativeTargetDir}`, this.projectRoot!);
+            await runCommand(`git submodule add ${cleanUrl} ${relativeTargetDir}`, projectRoot!);
         }
 
         // Stage 4: Recurse

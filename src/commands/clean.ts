@@ -5,8 +5,10 @@ import path from 'path';
 export default class CleanCommand extends BaseCommand {
     static usage = 'clean';
     static description = 'Clean project artifacts and caches.';
+    static requiresProject = true;
 
     async run(options: any) {
+        const projectRoot = this.projectRoot as string;
         const coreDir = path.join('src', 'core');
 
         // Core cleaning logic
@@ -22,7 +24,7 @@ export default class CleanCommand extends BaseCommand {
         ];
 
         for (const target of targets) {
-            const targetPath = path.resolve(process.cwd(), target);
+            const targetPath = path.resolve(projectRoot, target);
             logger.debug(`Checking clean target: ${targetPath}`);
             if (await fs.pathExists(targetPath)) {
                 await fs.remove(targetPath);

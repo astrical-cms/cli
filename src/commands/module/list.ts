@@ -8,12 +8,8 @@ export default class ModuleListCommand extends BaseCommand {
     static requiresProject = true;
 
     async run() {
-        if (!this.projectRoot) {
-            this.error('Project root not found.');
-            return;
-        }
-
-        const modulesDir = path.resolve(this.projectRoot, 'src', 'modules');
+        const projectRoot = this.projectRoot as string;
+        const modulesDir = path.resolve(projectRoot, 'src', 'modules');
         logger.debug(`Scanning for modules in: ${modulesDir}`);
 
         if (!(await fs.pathExists(modulesDir))) {

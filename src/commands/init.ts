@@ -7,6 +7,8 @@ import path from 'path';
 export default class InitCommand extends BaseCommand {
     static usage = 'init';
     static description = 'Initialize a new Astrical project.';
+    static requiresProject = false;
+
     static args: CommandDefinition = {
         args: [
             { name: 'directory', required: true, description: 'Directory to initialize the project in' }
@@ -19,8 +21,6 @@ export default class InitCommand extends BaseCommand {
             }
         ]
     };
-
-    static requiresProject = false;
 
     async run(options: any) {
         const directory = options.directory;

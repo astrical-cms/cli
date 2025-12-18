@@ -10,18 +10,14 @@ export default class DevCommand extends BaseCommand {
     static requiresProject = true;
 
     async run(options: any) {
-        if (!this.projectRoot) {
-            this.error('Project root not found.');
-            return;
-        }
-
-        const siteDir = path.resolve(this.projectRoot, 'site');
+        const projectRoot = this.projectRoot as string;
+        const siteDir = path.resolve(projectRoot, 'site');
 
         this.info('Initializing ephemeral build environment...');
 
         try {
-            logger.debug(`Preparing environment at: ${this.projectRoot}`);
-            await linkEnvironment(this.projectRoot);
+            logger.debug(`Preparing environment at: ${projectRoot}`);
+            await linkEnvironment(projectRoot);
         } catch (error: any) {
             this.error(error);
             return;
@@ -37,7 +33,7 @@ export default class DevCommand extends BaseCommand {
 
         this.success('Environment ready. Starting Astro...');
 
-        const astroBin = path.join(this.projectRoot, 'node_modules', '.bin', 'astro');
+        const astroBin = path.join(projectRoot, 'node_modules', '.bin', 'astro');
         logger.debug(`Spawning astro dev from: ${astroBin} in ${siteDir}`);
 
         const child = spawn(astroBin, ['dev'], {

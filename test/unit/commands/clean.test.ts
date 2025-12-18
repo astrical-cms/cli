@@ -25,6 +25,7 @@ describe('CleanCommand', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         command = new CleanCommand({});
+        (command as any).projectRoot = '/mock/root';
         vi.mocked(fs.pathExists).mockImplementation(async () => false);
         vi.mocked(fs.remove).mockResolvedValue(undefined);
     });
@@ -35,6 +36,16 @@ describe('CleanCommand', () => {
 
     it('should have correct metadata', () => {
         expect(CleanCommand.usage).toBeDefined();
+        expect(CleanCommand.requiresProject).toBe(true);
+    });
+
+    it('should error if project root is missing', async () => {
+        (command as any).projectRoot = null;
+        vi.spyOn(command, 'init').mockImplementation(async () => { }); // No projectRoot
+        vi.spyOn(command, 'error').mockImplementation(() => { });
+
+        await command.runInit({});
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('requires to be run within an app project'), 1);
     });
 
     it('should remove targets if they exist', async () => {

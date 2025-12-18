@@ -57,11 +57,11 @@ describe('BuildCommand', () => {
 
     it('should error if project root is missing', async () => {
         command = new BuildCommand({ rootDir: undefined });
-        vi.spyOn(command, 'init').mockImplementation(async () => { }); // No projectRoot set
+        vi.spyOn(command, 'init').mockImplementation(async () => { }); // No projectRoot set (remains null)
         vi.spyOn(command, 'error').mockImplementation(() => { });
 
-        await command.run({});
-        expect(command.error).toHaveBeenCalledWith('Project root not found.');
+        await command.runInit({});
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('requires to be run within an app project'), 1);
     });
 
     it('should error if copyEnvironment fails', async () => {

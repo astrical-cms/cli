@@ -23,13 +23,23 @@ describe('CleanCommand Integration', () => {
 
     it('should remove site and node_modules directories', async () => {
         const cli = new CLI({ commandName: 'astrical' });
-        const command = new CleanCommand(cli);
+        // CleanCommand expects (cli, globalOptions)
+        // We pass rootDir here to ensure it's set without relying on auto-discovery in test environment
+        const command = new CleanCommand(cli, { rootDir: tempDir });
+
+        // Create project config
+        await fs.outputFile(path.join(tempDir, 'astrical.yml'), 'name: test-project');
 
         const originalCwd = process.cwd();
         try {
             process.chdir(tempDir);
 
-            await command.run({});
+            // Use runInit to ensure checks run (which will read astrical.yml)
+            console.log(`[TEST] Running clean in ${tempDir}`);
+            await command.runInit({ debug: true });
+
+            console.log(`[TEST] ProjectRoot resolved to: ${(command as any).projectRoot}`);
+            console.log(`[TEST] site exists? ${await fs.pathExists(path.join(tempDir, 'site'))}`);
 
             expect(fs.existsSync(path.join(tempDir, 'site'))).toBe(false);
             expect(fs.existsSync(path.join(tempDir, 'node_modules'))).toBe(false);

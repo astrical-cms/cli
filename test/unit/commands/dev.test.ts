@@ -60,9 +60,11 @@ describe('DevCommand', () => {
 
     it('should error if project root is missing', async () => {
         command = new DevCommand({}, { rootDir: undefined });
+        vi.spyOn(command, 'init').mockImplementation(async () => { });
         vi.spyOn(command, 'error').mockImplementation((() => { }) as any);
-        await command.run({});
-        expect(command.error).toHaveBeenCalledWith('Project root not found.');
+
+        await command.runInit({});
+        expect(command.error).toHaveBeenCalledWith(expect.stringContaining('requires to be run within an app project'), 1);
     });
 
     it('should initialize environment and spawn astro dev', async () => {

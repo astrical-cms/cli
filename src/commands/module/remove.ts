@@ -14,16 +14,11 @@ export default class ModuleRemoveCommand extends BaseCommand {
     };
 
     async run(options: any) {
-        logger.debug('ModuleRemove Options:', options);
+        const projectRoot = this.projectRoot as string;
         let { name } = options;
 
-        if (!this.projectRoot) {
-            this.error('Project root not found.');
-            return;
-        }
-
         const relativePath = `src/modules/${name}`;
-        const fullPath = path.resolve(this.projectRoot, relativePath);
+        const fullPath = path.resolve(projectRoot, relativePath);
 
         logger.debug('Removing module at:', fullPath);
 
@@ -35,17 +30,17 @@ export default class ModuleRemoveCommand extends BaseCommand {
         this.info(`Removing module ${name}...`);
 
         try {
-            await runCommand(`git submodule deinit -f ${relativePath}`, this.projectRoot);
-            await runCommand(`git rm -f ${relativePath}`, this.projectRoot);
+            await runCommand(`git submodule deinit -f ${relativePath}`, projectRoot);
+            await runCommand(`git rm -f ${relativePath}`, projectRoot);
 
             // Clean up .git/modules
-            const gitModulesDir = path.resolve(this.projectRoot, '.git', 'modules', 'src', 'modules', name);
+            const gitModulesDir = path.resolve(projectRoot, '.git', 'modules', 'src', 'modules', name);
             if (await fs.pathExists(gitModulesDir)) {
                 await fs.remove(gitModulesDir);
             }
 
             this.info('Syncing workspace dependencies...');
-            await runCommand('npm install', this.projectRoot);
+            await runCommand('npm install', projectRoot);
 
             this.success(`Module ${name} removed successfully.`);
         } catch (e: any) {
