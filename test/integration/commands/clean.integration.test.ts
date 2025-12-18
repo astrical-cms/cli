@@ -36,6 +36,7 @@ describe('CleanCommand Integration', () => {
 
             // Use runInit to ensure checks run (which will read astrical.yml)
             console.log(`[TEST] Running clean in ${tempDir}`);
+            await command.init();
             await command.runInit({ debug: true });
 
             console.log(`[TEST] ProjectRoot resolved to: ${(command as any).projectRoot}`);
