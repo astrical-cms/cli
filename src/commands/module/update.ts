@@ -1,4 +1,4 @@
-import { BaseCommand, logger, runCommand } from '@nexical/cli-core';
+import { CommandDefinition, BaseCommand, logger, runCommand } from '@nexical/cli-core';
 import fs from 'fs-extra';
 import path from 'path';
 
@@ -7,7 +7,7 @@ export default class ModuleUpdateCommand extends BaseCommand {
     static description = 'Update a specific module or all modules.';
     static requiresProject = true;
 
-    static args = {
+    static args: CommandDefinition = {
         args: [
             { name: 'name', required: false, description: 'Name of the module to update' }
         ]

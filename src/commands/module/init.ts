@@ -1,4 +1,4 @@
-import { BaseCommand, logger, runCommand } from '@nexical/cli-core';
+import { CommandDefinition, BaseCommand, logger, runCommand } from '@nexical/cli-core';
 import fs from 'fs-extra';
 import path from 'path';
 import * as git from '../../utils/git.js';
@@ -10,7 +10,7 @@ export default class ModuleInitCommand extends BaseCommand {
     static description = 'Initialize a new module from a starter repository.';
     static requiresProject = true;
 
-    static args = {
+    static args: CommandDefinition = {
         args: [
             { name: 'module_name', required: true, description: 'Name of the new module' }
         ],

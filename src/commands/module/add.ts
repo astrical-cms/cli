@@ -1,4 +1,4 @@
-import { BaseCommand, logger, runCommand } from '@nexical/cli-core';
+import { CommandDefinition, BaseCommand, logger, runCommand } from '@nexical/cli-core';
 import fs from 'fs-extra';
 import path from 'path';
 import { clone, getRemoteUrl } from '../../utils/git.js';
@@ -10,7 +10,7 @@ export default class ModuleAddCommand extends BaseCommand {
     static description = 'Add a module and its dependencies as git submodules.';
     static requiresProject = true;
 
-    static args = {
+    static args: CommandDefinition = {
         args: [
             { name: 'url', required: true, description: 'Git repository URL or gh@org/repo' }
         ]
