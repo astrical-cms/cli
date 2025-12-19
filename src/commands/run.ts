@@ -1,4 +1,4 @@
-import { BaseCommand, logger } from '@nexical/cli-core';
+import { CommandDefinition, BaseCommand, logger } from '@nexical/cli-core';
 import fs from 'fs-extra';
 import path from 'path';
 import { spawn } from 'child_process';
@@ -10,7 +10,7 @@ export default class RunCommand extends BaseCommand {
     static description = 'Run a script inside the Astrical environment.';
     static requiresProject = true;
 
-    static args = {
+    static args: CommandDefinition = {
         args: [
             { name: 'script', required: true, description: 'The script to run (script-name OR module:script-name)' },
             { name: 'args...', required: false, description: 'Arguments for the script' }
